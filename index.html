@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo Oculto de Markov (HMM) | Simulador Interactivo</title>
+    <meta name="description" content="Simulador interactivo de Modelos Ocultos de Markov con algoritmo de Viterbi y análisis de secuencias.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                        <circle cx="6" cy="14" r="4" fill="url(#g1)" opacity="0.9"/>
+                        <circle cx="22" cy="6" r="4" fill="url(#g2)" opacity="0.9"/>
+                        <circle cx="22" cy="22" r="4" fill="url(#g3)" opacity="0.9"/>
+                        <path d="M9 12 L19 7" stroke="url(#g4)" stroke-width="1.5" opacity="0.6"/>
+                        <path d="M9 16 L19 21" stroke="url(#g4)" stroke-width="1.5" opacity="0.6"/>
+                        <path d="M22 10 L22 18" stroke="url(#g4)" stroke-width="1.5" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+                            <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#06b6d4"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+                            <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f472b6"/><stop offset="1" stop-color="#e879f9"/></linearGradient>
+                            <linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#94a3b8"/><stop offset="1" stop-color="#64748b"/></linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="logo-title">Modelo Oculto de Markov (HMM)</h1>
+                    <p class="logo-subtitle">Simulador Estocástico Interactivo con Viterbi</p>
+                </div>
+            </div>
+            <div class="header-links">
+                <a href="https://github.com/Biershoot/S25---M-dulo-2.-Actividad-did-ctica-2" target="_blank" class="header-link">🔗 Repositorio GitHub</a>
+                <a href="#video-sustentacion" class="header-link">▶️ Video Sustentación</a>
+            </div>
+            <div class="header-badges">
+                <span class="badge badge-info">Inferencia Estadística</span>
+                <span class="badge badge-accent">Algoritmo de Viterbi</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Scenario Selector -->
+        <section class="section" id="scenario-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="section-icon">🎯</span>
+                    Seleccionar Escenario (HMM)
+                </h2>
+                <p class="section-desc">Elige un modelo con estados no observables directamente y observaciones visibles para inferir el estado real.</p>
+            </div>
+            <div class="scenario-grid" id="scenario-grid">
+                <!-- Scenarios injected by JS -->
+            </div>
+        </section>
+
+        <!-- Configuration -->
+        <div class="grid-2col">
+            <!-- Matrices -->
+            <section class="section" id="matrices-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="section-icon">📊</span>
+                        Parámetros del Modelo
+                    </h2>
+                    <p class="section-desc">Configuración de matrices probabilísticas del HMM</p>
+                </div>
+                
+                <h3 class="subsection-title">1. Distribución Inicial (π)</h3>
+                <p class="subsection-desc">Probabilidad de iniciar en cada estado oculto</p>
+                <div class="matrix-container" id="initial-container"></div>
+                
+                <h3 class="subsection-title">2. Matriz de Transición (A)</h3>
+                <p class="subsection-desc">Probabilidad de pasar de un estado oculto a otro</p>
+                <div class="matrix-container" id="transition-matrix"></div>
+                
+                <h3 class="subsection-title">3. Matriz de Emisión (B)</h3>
+                <p class="subsection-desc">Probabilidad de generar una observación dada un estado oculto</p>
+                <div class="matrix-container" id="emission-matrix"></div>
+                
+                <div class="matrix-validation" id="matrix-validation"></div>
+            </section>
+
+            <!-- State Diagram (Canvas) -->
+            <section class="section" id="diagram-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="section-icon">🔗</span>
+                        Diagrama de Transición de Estados
+                    </h2>
+                    <p class="section-desc">Visualización del grafo de estados ocultos</p>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="state-diagram" width="560" height="400"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Simulation Controls -->
+        <section class="section" id="controls-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    Controles de Simulación
+                </h2>
+                <p class="section-desc">Configura los parámetros para generar la secuencia estocástica</p>
+            </div>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label" for="num-steps">Número de Pasos (Observaciones)</label>
+                    <input type="range" id="num-steps" class="control-range" min="10" max="200" value="50" step="10">
+                    <span class="control-value" id="num-steps-value">50</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="num-simulations">Número de Simulaciones (Promedio)</label>
+                    <input type="range" id="num-simulations" class="control-range" min="1" max="100" value="50" step="1">
+                    <span class="control-value" id="num-simulations-value">50</span>
+                </div>
+                <div class="control-group control-buttons" style="grid-column: span 2;">
+                    <button class="btn btn-primary" id="btn-simulate" onclick="runSimulation()">
+                        <span class="btn-icon">▶</span> Ejecutar Simulación y Viterbi
+                    </button>
+                    <button class="btn btn-secondary" id="btn-reset" onclick="resetResults()">
+                        <span class="btn-icon">↺</span> Reiniciar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <div id="results-wrapper" class="results-wrapper hidden">
+            <!-- Traces -->
+            <section class="section" id="trace-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="section-icon">📈</span>
+                        Secuencias (Trazas)
+                    </h2>
+                    <p class="section-desc">Secuencia real, observada e inferida por Viterbi</p>
+                </div>
+                
+                <h3 class="subsection-title" style="margin-top:1rem;">A. Estados Ocultos Reales</h3>
+                <p class="subsection-desc">La secuencia estocástica real generada pero invisible en la práctica.</p>
+                <div class="canvas-wrapper canvas-wide">
+                    <canvas id="trace-chart" width="1100" height="200"></canvas>
+                </div>
+
+                <h3 class="subsection-title" style="margin-top:1.5rem;">B. Observaciones Visibles</h3>
+                <p class="subsection-desc">Lo que el modelo realmente detecta basado en la Matriz de Emisión.</p>
+                <div class="canvas-wrapper canvas-wide">
+                    <canvas id="obs-chart" width="1100" height="200"></canvas>
+                </div>
+                
+                <h3 class="subsection-title" style="margin-top:1.5rem;">C. Inferencia de Viterbi</h3>
+                <p class="subsection-desc">La secuencia de estados ocultos más probable calculada a partir de las observaciones.</p>
+                <div class="canvas-wrapper canvas-wide">
+                    <canvas id="inferred-chart" width="1100" height="200"></canvas>
+                </div>
+            </section>
+
+            <!-- Analysis -->
+            <div class="grid-2col">
+                <section class="section" id="viterbi-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <span class="section-icon">🎯</span>
+                            Precisión de Inferencia
+                        </h2>
+                        <p class="section-desc">Qué tan acertado fue el algoritmo de Viterbi reconstruyendo los estados ocultos</p>
+                    </div>
+                    <div class="stats-table-wrapper" id="viterbi-stats-wrapper"></div>
+                </section>
+
+                <section class="section" id="stationary-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <span class="section-icon">📉</span>
+                            Distribución de Estados Ocultos
+                        </h2>
+                        <p class="section-desc">Convergencia de la simulación vs Distribución Estacionaria Teórica</p>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="stationary-chart" width="520" height="300"></canvas>
+                    </div>
+                    <div class="stats-table-wrapper" id="stats-table-wrapper"></div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Modelo Oculto de Markov (HMM) — Simulación e Inferencia</p>
+        <p class="footer-sub">Alejandro Arango · 2026</p>
+        <div id="video-sustentacion" style="margin-top: 15px;">
+            <!-- Deja tu video aquí -->
+            <p><strong>Video de Sustentación:</strong> [ESPACIO PARA AGREGAR EL ENLACE AL VIDEO DESPUÉS]</p>
+        </div>
+    </footer>
+
+    <script src="markov.js"></script>
+</body>
+</html>

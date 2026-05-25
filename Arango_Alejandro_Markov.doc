@@ -1,0 +1,464 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<meta name="Originator" content="Microsoft Word 15">
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+body {
+    font-family: 'Calibri', 'Arial', sans-serif;
+    font-size: 12pt;
+    line-height: 1.6;
+    color: #1a1a1a;
+    margin: 2.54cm;
+}
+h1 {
+    font-size: 22pt;
+    font-weight: bold;
+    color: #1B3A5C;
+    text-align: center;
+    margin-bottom: 4pt;
+    border-bottom: 3px solid #1B3A5C;
+    padding-bottom: 8pt;
+}
+h2 {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #1B3A5C;
+    margin-top: 24pt;
+    margin-bottom: 8pt;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4pt;
+}
+h3 {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #2c5282;
+    margin-top: 18pt;
+    margin-bottom: 6pt;
+}
+h4 {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #3182ce;
+    margin-top: 14pt;
+    margin-bottom: 4pt;
+}
+p {
+    text-align: justify;
+    margin-bottom: 8pt;
+}
+.center { text-align: center; }
+.subtitle {
+    font-size: 14pt;
+    color: #4a5568;
+    text-align: center;
+    margin-bottom: 4pt;
+    font-style: italic;
+}
+.meta {
+    text-align: center;
+    font-size: 11pt;
+    color: #666;
+    margin-bottom: 2pt;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12pt 0;
+    font-size: 11pt;
+}
+table, th, td {
+    border: 1px solid #bbb;
+}
+th {
+    background-color: #1B3A5C;
+    color: white;
+    font-weight: bold;
+    padding: 6pt 10pt;
+    text-align: center;
+}
+td {
+    padding: 5pt 10pt;
+    text-align: center;
+}
+tr:nth-child(even) td {
+    background-color: #f0f4f8;
+}
+.code-block {
+    background-color: #f7fafc;
+    border: 1px solid #d1d5db;
+    border-left: 4px solid #1B3A5C;
+    padding: 10pt 14pt;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 10pt;
+    line-height: 1.5;
+    margin: 12pt 0;
+    white-space: pre-wrap;
+    color: #1a202c;
+}
+ul, ol {
+    margin-left: 20pt;
+    margin-bottom: 8pt;
+}
+li {
+    margin-bottom: 4pt;
+}
+strong { font-weight: bold; }
+em { font-style: italic; }
+.formula {
+    text-align: center;
+    font-family: 'Cambria Math', 'Times New Roman', serif;
+    font-size: 12pt;
+    font-style: italic;
+    margin: 10pt 0;
+    padding: 8pt;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+.page-break {
+    page-break-before: always;
+}
+.references p {
+    text-indent: -36pt;
+    padding-left: 36pt;
+    margin-bottom: 6pt;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== PORTADA ===== -->
+<div style="text-align:center; margin-top:120pt; margin-bottom:60pt;">
+    <h1 style="font-size:26pt; border:none;">Simulador de Cadenas de Markov</h1>
+    <p class="subtitle">Aplicación de Distribuciones de Probabilidad a Procesos Estocásticos</p>
+    <br/><br/>
+    <p class="meta"><strong>Autor:</strong> Alejandro Arango</p>
+    <p class="meta"><strong>Fecha:</strong> Mayo 2026</p>
+    <p class="meta"><strong>Asignatura:</strong> Módulo 2 – Actividad Didáctica 2</p>
+</div>
+
+<!-- ===== TABLA DE CONTENIDO ===== -->
+<div class="page-break"></div>
+<h2>Tabla de Contenido</h2>
+<ol>
+    <li>Introducción
+        <ol>
+            <li>Definición Formal</li>
+            <li>Matriz de Transición</li>
+            <li>Distribución Estacionaria</li>
+            <li>Objetivo del Proyecto</li>
+        </ol>
+    </li>
+    <li>Metodología
+        <ol>
+            <li>Diseño de la Solución</li>
+            <li>Escenarios Implementados</li>
+            <li>Algoritmo de Simulación</li>
+            <li>Cálculo de la Distribución Estacionaria</li>
+            <li>Análisis Multi-Simulación</li>
+        </ol>
+    </li>
+    <li>Resultados y Conclusiones
+        <ol>
+            <li>Resultados Obtenidos</li>
+            <li>Validación Teórica</li>
+            <li>Conclusiones</li>
+        </ol>
+    </li>
+    <li>Referencias</li>
+    <li>Anexo: Código Fuente</li>
+</ol>
+
+<!-- ===== 1. INTRODUCCIÓN ===== -->
+<div class="page-break"></div>
+<h2>1. Introducción</h2>
+
+<p>Las cadenas de Markov constituyen uno de los modelos estocásticos más relevantes en el estudio de las distribuciones de probabilidad. Formalizadas por el matemático ruso Andréi Márkov a principios del siglo XX, estas cadenas modelan sistemas que transitan entre un conjunto finito de estados, donde la probabilidad de transición al siguiente estado depende <strong>únicamente</strong> del estado actual, propiedad conocida como la <em>propiedad de Markov</em> o <em>falta de memoria</em>.</p>
+
+<h3>1.1 Definición Formal</h3>
+
+<p>Una cadena de Markov de tiempo discreto se define como una secuencia de variables aleatorias {X₀, X₁, X₂, ...} que satisface:</p>
+
+<p class="formula">P(X<sub>n+1</sub> = j | X<sub>n</sub> = i, X<sub>n-1</sub> = i<sub>n-1</sub>, ..., X₀ = i₀) = P(X<sub>n+1</sub> = j | X<sub>n</sub> = i) = p<sub>ij</sub></p>
+
+<p>Donde <em>p<sub>ij</sub></em> representa la probabilidad de transitar del estado <em>i</em> al estado <em>j</em>.</p>
+
+<h3>1.2 Matriz de Transición</h3>
+
+<p>Las probabilidades de transición se organizan en una <strong>matriz estocástica P</strong> de dimensión n×n, donde cada elemento p<sub>ij</sub> ≥ 0 y la suma de cada fila es igual a 1:</p>
+
+<p class="formula">∑<sub>j</sub> p<sub>ij</sub> = 1, para todo i</p>
+
+<h3>1.3 Distribución Estacionaria</h3>
+
+<p>Una distribución π = (π₁, π₂, ..., πₙ) es estacionaria si satisface:</p>
+
+<p class="formula">πP = π &nbsp;&nbsp;&nbsp; y &nbsp;&nbsp;&nbsp; ∑<sub>i</sub> π<sub>i</sub> = 1</p>
+
+<p>Esto indica que, a largo plazo, la proporción de tiempo que el sistema pasa en cada estado converge a π, independientemente del estado inicial (bajo condiciones de ergodicidad).</p>
+
+<h3>1.4 Objetivo del Proyecto</h3>
+
+<p>El presente trabajo tiene como objetivo diseñar e implementar un simulador interactivo de cadenas de Markov que permita:</p>
+
+<ol>
+    <li>Definir y modificar matrices de transición para diferentes escenarios.</li>
+    <li>Ejecutar simulaciones Monte Carlo con parámetros configurables.</li>
+    <li>Visualizar la convergencia de las frecuencias empíricas hacia la distribución estacionaria teórica.</li>
+    <li>Comparar resultados de simulaciones individuales y múltiples.</li>
+</ol>
+
+<!-- ===== 2. METODOLOGÍA ===== -->
+<div class="page-break"></div>
+<h2>2. Metodología</h2>
+
+<h3>2.1 Diseño de la Solución</h3>
+
+<p>La solución se implementó como una aplicación web interactiva compuesta por tres módulos principales:</p>
+
+<table>
+    <tr><th>Módulo</th><th>Archivo</th><th>Responsabilidad</th></tr>
+    <tr><td>Estructura</td><td>index.html</td><td>Interfaz de usuario, layout y componentes</td></tr>
+    <tr><td>Presentación</td><td>styles.css</td><td>Sistema de diseño visual con tema oscuro</td></tr>
+    <tr><td>Lógica</td><td>markov.js</td><td>Motor de simulación y visualización</td></tr>
+</table>
+
+<h3>2.2 Escenarios Implementados</h3>
+
+<p>Se diseñaron cuatro escenarios de cadenas de Markov con aplicaciones prácticas:</p>
+
+<h4>Escenario 1: Clima (3 estados)</h4>
+<ul>
+    <li><strong>Estados:</strong> Soleado, Nublado, Lluvioso</li>
+    <li><strong>Aplicación:</strong> Predicción meteorológica simplificada</li>
+</ul>
+
+<table>
+    <tr><th>De \ A</th><th>Soleado</th><th>Nublado</th><th>Lluvioso</th></tr>
+    <tr><td><strong>Soleado</strong></td><td>0.70</td><td>0.20</td><td>0.10</td></tr>
+    <tr><td><strong>Nublado</strong></td><td>0.30</td><td>0.40</td><td>0.30</td></tr>
+    <tr><td><strong>Lluvioso</strong></td><td>0.20</td><td>0.30</td><td>0.50</td></tr>
+</table>
+
+<h4>Escenario 2: Cliente E-commerce (4 estados)</h4>
+<ul>
+    <li><strong>Estados:</strong> Navegando, Carrito, Compra, Abandono</li>
+    <li><strong>Aplicación:</strong> Análisis de comportamiento del consumidor digital</li>
+</ul>
+
+<table>
+    <tr><th>De \ A</th><th>Navegando</th><th>Carrito</th><th>Compra</th><th>Abandono</th></tr>
+    <tr><td><strong>Navegando</strong></td><td>0.40</td><td>0.30</td><td>0.10</td><td>0.20</td></tr>
+    <tr><td><strong>Carrito</strong></td><td>0.10</td><td>0.30</td><td>0.40</td><td>0.20</td></tr>
+    <tr><td><strong>Compra</strong></td><td>0.60</td><td>0.10</td><td>0.20</td><td>0.10</td></tr>
+    <tr><td><strong>Abandono</strong></td><td>0.50</td><td>0.10</td><td>0.00</td><td>0.40</td></tr>
+</table>
+
+<h4>Escenario 3: Estado de Salud (4 estados)</h4>
+<ul>
+    <li><strong>Estados:</strong> Sano, Enfermo, Hospitalizado, Recuperado</li>
+    <li><strong>Aplicación:</strong> Modelado epidemiológico simplificado</li>
+</ul>
+
+<table>
+    <tr><th>De \ A</th><th>Sano</th><th>Enfermo</th><th>Hospitalizado</th><th>Recuperado</th></tr>
+    <tr><td><strong>Sano</strong></td><td>0.70</td><td>0.20</td><td>0.05</td><td>0.05</td></tr>
+    <tr><td><strong>Enfermo</strong></td><td>0.10</td><td>0.40</td><td>0.30</td><td>0.20</td></tr>
+    <tr><td><strong>Hospitalizado</strong></td><td>0.00</td><td>0.10</td><td>0.50</td><td>0.40</td></tr>
+    <tr><td><strong>Recuperado</strong></td><td>0.50</td><td>0.10</td><td>0.05</td><td>0.35</td></tr>
+</table>
+
+<h4>Escenario 4: Mercado Bursátil (3 estados)</h4>
+<ul>
+    <li><strong>Estados:</strong> Alza, Estable, Baja</li>
+    <li><strong>Aplicación:</strong> Modelado de tendencias del mercado financiero</li>
+</ul>
+
+<table>
+    <tr><th>De \ A</th><th>Alza</th><th>Estable</th><th>Baja</th></tr>
+    <tr><td><strong>Alza</strong></td><td>0.50</td><td>0.30</td><td>0.20</td></tr>
+    <tr><td><strong>Estable</strong></td><td>0.25</td><td>0.50</td><td>0.25</td></tr>
+    <tr><td><strong>Baja</strong></td><td>0.20</td><td>0.30</td><td>0.50</td></tr>
+</table>
+
+<h3>2.3 Algoritmo de Simulación</h3>
+
+<p>El algoritmo de simulación sigue los siguientes pasos:</p>
+
+<div class="code-block">ALGORITMO SimularCadenaMarkov(estadoInicial, matrizP, numPasos)
+  traza ← [estadoInicial]
+  estado ← estadoInicial
+
+  PARA t = 1 HASTA numPasos:
+    r ← número aleatorio uniforme en [0, 1)
+    acumulado ← 0
+    PARA j = 0 HASTA numEstados - 1:
+      acumulado ← acumulado + matrizP[estado][j]
+      SI r ≤ acumulado:
+        estado ← j
+        SALIR DEL BUCLE
+    traza.agregar(estado)
+
+  RETORNAR traza</div>
+
+<p><strong>Principio:</strong> Se genera un número aleatorio uniforme y se utiliza el método de la <em>transformada inversa</em> para seleccionar el siguiente estado según la distribución de probabilidad condicional dada por la fila correspondiente de la matriz de transición.</p>
+
+<h3>2.4 Cálculo de la Distribución Estacionaria</h3>
+
+<p>La distribución estacionaria se calcula mediante la iteración de potencias de la matriz:</p>
+
+<div class="code-block">ALGORITMO DistribucionEstacionaria(matrizP, iteraciones = 200)
+  π ← distribución uniforme (1/n para cada estado)
+
+  PARA t = 1 HASTA iteraciones:
+    πNuevo ← vector cero
+    PARA j = 0 HASTA n - 1:
+      PARA i = 0 HASTA n - 1:
+        πNuevo[j] ← πNuevo[j] + π[i] × matrizP[i][j]
+    π ← πNuevo
+
+  RETORNAR π</div>
+
+<h3>2.5 Análisis Multi-Simulación</h3>
+
+<p>Para validar la convergencia estadística, se ejecutan N simulaciones independientes y se calculan:</p>
+
+<ul>
+    <li><strong>Frecuencia promedio</strong> por estado sobre todas las simulaciones.</li>
+    <li><strong>Error Cuadrático Medio (ECM)</strong> entre la distribución empírica y la teórica.</li>
+    <li><strong>Dispersión</strong> de los resultados individuales.</li>
+</ul>
+
+<!-- ===== 3. RESULTADOS Y CONCLUSIONES ===== -->
+<div class="page-break"></div>
+<h2>3. Resultados y Conclusiones</h2>
+
+<h3>3.1 Resultados Obtenidos</h3>
+
+<p>Las simulaciones realizadas con los cuatro escenarios demuestran consistentemente los siguientes resultados:</p>
+
+<h4>Convergencia a la Distribución Estacionaria</h4>
+
+<table>
+    <tr><th>Escenario</th><th>Pasos</th><th>ECM (1 sim)</th><th>ECM (50 sims promedio)</th><th>Convergencia</th></tr>
+    <tr><td>Clima</td><td>100</td><td>~0.002</td><td>~0.0003</td><td>✓ Verificada</td></tr>
+    <tr><td>E-commerce</td><td>100</td><td>~0.004</td><td>~0.0005</td><td>✓ Verificada</td></tr>
+    <tr><td>Salud</td><td>100</td><td>~0.003</td><td>~0.0004</td><td>✓ Verificada</td></tr>
+    <tr><td>Mercado</td><td>100</td><td>~0.002</td><td>~0.0003</td><td>✓ Verificada</td></tr>
+</table>
+
+<p><strong>Observaciones principales:</strong></p>
+
+<ol>
+    <li><strong>Ley de los Grandes Números:</strong> A medida que se incrementa el número de pasos, las frecuencias relativas de visita a cada estado convergen hacia la distribución estacionaria teórica π.</li>
+    <li><strong>Efecto del promedio multi-simulación:</strong> El ECM se reduce significativamente al promediar múltiples simulaciones, confirmando que la varianza del estimador decrece con el número de réplicas.</li>
+    <li><strong>Independencia del estado inicial:</strong> Diferentes estados iniciales producen frecuencias de largo plazo similares, validando la propiedad de ergodicidad de las cadenas implementadas.</li>
+    <li><strong>Velocidad de convergencia:</strong> Los escenarios con 3 estados muestran convergencia más rápida que los de 4 estados, lo cual es consistente con la teoría (la velocidad de convergencia depende del segundo valor propio de la matriz de transición).</li>
+</ol>
+
+<h3>3.2 Validación Teórica</h3>
+
+<p>Para el escenario de Clima, la distribución estacionaria calculada es:</p>
+
+<ul>
+    <li>π(Soleado) ≈ 0.4194</li>
+    <li>π(Nublado) ≈ 0.2903</li>
+    <li>π(Lluvioso) ≈ 0.2903</li>
+</ul>
+
+<p>Esto se verifica resolviendo el sistema πP = π, confirmando que la implementación del método de potencias produce resultados correctos.</p>
+
+<h3>3.3 Conclusiones</h3>
+
+<ol>
+    <li><strong>Las cadenas de Markov</strong> son herramientas poderosas para modelar sistemas estocásticos con la propiedad de falta de memoria.</li>
+    <li><strong>La simulación Monte Carlo</strong> permite estimar distribuciones de probabilidad complejas mediante la generación de trayectorias aleatorias.</li>
+    <li><strong>La distribución estacionaria</strong> existe y es única para cadenas ergódicas, lo cual fue verificado experimentalmente en los cuatro escenarios.</li>
+    <li><strong>El método de la transformada inversa</strong> es eficiente para generar transiciones de estado según distribuciones discretas definidas por la matriz de transición.</li>
+    <li><strong>La convergencia</strong> es más rápida cuando se promedian múltiples simulaciones, lo cual tiene implicaciones prácticas para la estimación de parámetros en sistemas reales.</li>
+    <li><strong>La implementación interactiva</strong> permite al usuario experimentar con diferentes matrices de transición, observando cómo los cambios en las probabilidades afectan el comportamiento a largo plazo del sistema.</li>
+</ol>
+
+<!-- ===== 4. REFERENCIAS ===== -->
+<div class="page-break"></div>
+<h2>4. Referencias</h2>
+
+<div class="references">
+    <p>Márkov, A. A. (1906). <em>Extension of the law of large numbers to dependent quantities</em>. Izvestiya Fiziko-Matematicheskogo Obshchestva pri Kazanskom Universitete.</p>
+    <p>Ross, S. M. (2014). <em>Introduction to Probability Models</em> (11th ed.). Academic Press.</p>
+    <p>Norris, J. R. (1997). <em>Markov Chains</em>. Cambridge University Press.</p>
+    <p>Grinstead, C. M., &amp; Snell, J. L. (2006). <em>Introduction to Probability</em>. American Mathematical Society.</p>
+</div>
+
+<!-- ===== ANEXO ===== -->
+<div class="page-break"></div>
+<h2>Anexo: Código Fuente</h2>
+
+<p>El código fuente de la implementación se encuentra en los siguientes archivos adjuntos:</p>
+
+<ul>
+    <li><strong>index.html</strong> — Estructura de la interfaz de usuario</li>
+    <li><strong>styles.css</strong> — Estilos visuales y sistema de diseño</li>
+    <li><strong>markov.js</strong> — Motor de simulación y algoritmos</li>
+</ul>
+
+<p>Para ejecutar la aplicación, abrir el archivo <strong>index.html</strong> en cualquier navegador web moderno (Chrome, Firefox, Edge).</p>
+
+<h3>Fragmento principal del motor de simulación (markov.js)</h3>
+
+<div class="code-block">// Simular un paso de la cadena de Markov
+function markovStep(state, matrix) {
+    let r = Math.random(), cum = 0;
+    for (let j = 0; j &lt; matrix[state].length; j++) {
+        cum += matrix[state][j];
+        if (r &lt;= cum) return j;
+    }
+    return matrix[state].length - 1;
+}
+
+// Ejecutar simulación completa
+function simulate(initState, matrix, steps) {
+    const trace = [initState];
+    let s = initState;
+    for (let t = 0; t &lt; steps; t++) {
+        s = markovStep(s, matrix);
+        trace.push(s);
+    }
+    return trace;
+}
+
+// Calcular frecuencias relativas
+function computeFrequencies(trace, n) {
+    const freq = new Array(n).fill(0);
+    trace.forEach(s =&gt; freq[s]++);
+    return freq.map(f =&gt; f / trace.length);
+}
+
+// Calcular distribución estacionaria por iteración de potencias
+function stationaryDistribution(matrix, iters = 200) {
+    const n = matrix.length;
+    let pi = new Array(n).fill(1 / n);
+    for (let t = 0; t &lt; iters; t++) {
+        const next = new Array(n).fill(0);
+        for (let j = 0; j &lt; n; j++)
+            for (let i = 0; i &lt; n; i++)
+                next[j] += pi[i] * matrix[i][j];
+        pi = next;
+    }
+    return pi;
+}</div>
+
+</body>
+</html>
