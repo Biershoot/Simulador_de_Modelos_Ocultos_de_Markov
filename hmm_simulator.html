@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo Oculto de Markov — Simulador HMM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06081a;--card:rgba(15,20,50,0.85);--card-solid:#0f1432;
+  --border:rgba(99,130,255,0.15);--border-h:rgba(99,130,255,0.35);
+  --primary:#4f7cff;--primary-g:linear-gradient(135deg,#4f7cff,#8b5cf6);
+  --accent-cyan:#22d3ee;--accent-purple:#a78bfa;--accent-pink:#ec4899;
+  --text:#e8ecf4;--text2:#8b95b0;--text3:#5a6380;
+  --exp:#34d399;--est:#4f7cff;--rec:#f43f5e;
+  --obs0:#22d3ee;--obs1:#a78bfa;--obs2:#f59e0b;--obs3:#ec4899;
+  --radius:16px;--radius-sm:10px;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  line-height:1.7;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%,rgba(79,124,255,0.12),transparent),
+    radial-gradient(ellipse 60% 50% at 80% 80%,rgba(139,92,246,0.10),transparent),
+    radial-gradient(ellipse 50% 40% at 50% 50%,rgba(34,211,238,0.05),transparent);
+}
+
+/* ===== UTILITIES ===== */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.section{padding:80px 0}
+.section-title{
+  font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;margin-bottom:12px;
+  background:var(--primary-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.section-sub{color:var(--text2);font-size:1.05rem;margin-bottom:40px;max-width:700px}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:32px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  transition:border-color .3s,box-shadow .3s;
+}
+.card:hover{border-color:var(--border-h);box-shadow:0 8px 32px rgba(79,124,255,0.08)}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.badge{
+  display:inline-block;padding:6px 18px;border-radius:99px;font-size:.78rem;font-weight:600;
+  background:rgba(79,124,255,0.12);color:var(--primary);border:1px solid rgba(79,124,255,0.25);
+  letter-spacing:.5px;text-transform:uppercase;
+}
+.icon-circle{
+  width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;margin-bottom:16px;flex-shrink:0;
+}
+.fade-in{opacity:0;transform:translateY(30px);transition:opacity .7s,transform .7s}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* ===== HERO ===== */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle,rgba(79,124,255,0.18),transparent 70%);
+  top:-100px;left:50%;transform:translateX(-50%);filter:blur(60px);
+}
+.hero-content{position:relative;z-index:1}
+.hero h1{
+  font-size:clamp(2.4rem,5.5vw,4rem);font-weight:900;line-height:1.15;margin:24px 0 16px;
+  background:linear-gradient(135deg,#fff 0%,#c7d2fe 50%,#8b5cf6 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero p.subtitle{font-size:clamp(1rem,2vw,1.3rem);color:var(--text2);max-width:600px;margin:0 auto 12px}
+.hero .author{color:var(--accent-purple);font-weight:600;font-size:1.05rem;margin-top:8px}
+.hero .scroll-hint{
+  margin-top:48px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:var(--text3);font-size:.85rem;animation:bounce 2s infinite;
+}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ===== THEORY CARDS ===== */
+.theory-card{display:flex;gap:20px;align-items:flex-start}
+.theory-card h3{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.theory-card p{color:var(--text2);font-size:.92rem}
+.component-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:24px}
+.comp-item{
+  background:rgba(79,124,255,0.06);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:20px;text-align:center;
+}
+.comp-item .symbol{font-size:1.6rem;font-weight:800;background:var(--primary-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.comp-item .label{font-size:.85rem;color:var(--text2);margin-top:6px}
+
+/* ===== HMM DIAGRAM ===== */
+.hmm-diagram{
+  position:relative;padding:60px 20px 80px;margin:40px 0;overflow-x:auto;
+}
+.hmm-diagram .states-row,.hmm-diagram .obs-row{
+  display:flex;justify-content:center;gap:60px;position:relative;
+}
+.hmm-diagram .obs-row{margin-top:80px}
+.state-node,.obs-node{
+  width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.82rem;text-align:center;position:relative;z-index:2;
+  box-shadow:0 4px 24px rgba(0,0,0,0.3);
+}
+.state-node{border:3px solid}
+.state-node.s0{background:rgba(52,211,153,0.15);border-color:var(--exp);color:var(--exp)}
+.state-node.s1{background:rgba(79,124,255,0.15);border-color:var(--est);color:var(--est)}
+.state-node.s2{background:rgba(244,63,94,0.15);border-color:var(--rec);color:var(--rec)}
+.obs-node{border-radius:var(--radius-sm);width:auto;height:auto;padding:12px 18px;font-size:.78rem;border:2px solid}
+.obs-node.o0{background:rgba(34,211,238,0.12);border-color:var(--obs0);color:var(--obs0)}
+.obs-node.o1{background:rgba(167,139,250,0.12);border-color:var(--obs1);color:var(--obs1)}
+.obs-node.o2{background:rgba(245,158,11,0.12);border-color:var(--obs2);color:var(--obs2)}
+.obs-node.o3{background:rgba(236,72,153,0.12);border-color:var(--obs3);color:var(--obs3)}
+.diagram-label{
+  text-align:center;font-size:.75rem;color:var(--text3);margin-bottom:12px;font-weight:600;
+  letter-spacing:1px;text-transform:uppercase;
+}
+.arrow-layer{
+  position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;
+}
+
+/* ===== MATRICES / TABLES ===== */
+.matrix-wrap{margin-bottom:32px}
+.matrix-wrap h3{font-size:1.15rem;font-weight:700;margin-bottom:4px}
+.matrix-wrap .matrix-desc{color:var(--text2);font-size:.88rem;margin-bottom:16px}
+.matrix-table{
+  width:100%;border-collapse:collapse;font-size:.88rem;
+}
+.matrix-table th,.matrix-table td{
+  padding:10px 14px;border:1px solid var(--border);text-align:center;
+}
+.matrix-table th{
+  background:rgba(79,124,255,0.08);color:var(--primary);font-weight:600;font-size:.82rem;
+}
+.matrix-table input[type=number]{
+  width:72px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);padding:6px 8px;text-align:center;font-family:inherit;font-size:.88rem;
+  transition:border-color .2s;
+}
+.matrix-table input[type=number]:focus{outline:none;border-color:var(--primary)}
+.row-sum{font-weight:700;font-size:.82rem}
+.row-sum.valid{color:var(--exp)}
+.row-sum.invalid{color:var(--rec)}
+
+/* ===== CONTROLS ===== */
+.controls-bar{
+  display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;
+}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:.82rem;color:var(--text2);font-weight:600}
+.control-group input[type=number]{
+  width:140px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);padding:10px 14px;font-family:inherit;font-size:1rem;
+}
+.control-group input[type=number]:focus{outline:none;border-color:var(--primary)}
+.btn-primary{
+  padding:14px 36px;border:none;border-radius:var(--radius-sm);font-family:inherit;
+  font-size:1rem;font-weight:700;color:#fff;background:var(--primary-g);cursor:pointer;
+  transition:transform .2s,box-shadow .2s;letter-spacing:.3px;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,124,255,0.3)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ===== PROGRESS ===== */
+.progress-wrap{
+  width:100%;height:8px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;
+  margin-top:20px;display:none;
+}
+.progress-wrap.active{display:block}
+.progress-bar{
+  height:100%;width:0%;background:var(--primary-g);border-radius:99px;transition:width .15s;
+}
+
+/* ===== TIMELINE ===== */
+.timeline-strip{
+  display:flex;gap:4px;overflow-x:auto;padding:12px 0;
+}
+.timeline-strip::-webkit-scrollbar{height:6px}
+.timeline-strip::-webkit-scrollbar-track{background:rgba(255,255,255,0.03);border-radius:3px}
+.timeline-strip::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
+.t-block{
+  min-width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:.65rem;font-weight:700;flex-shrink:0;position:relative;
+}
+.t-block.s0{background:rgba(52,211,153,0.2);color:var(--exp);border:1px solid rgba(52,211,153,0.4)}
+.t-block.s1{background:rgba(79,124,255,0.2);color:var(--est);border:1px solid rgba(79,124,255,0.4)}
+.t-block.s2{background:rgba(244,63,94,0.2);color:var(--rec);border:1px solid rgba(244,63,94,0.4)}
+.t-block.o0{background:rgba(34,211,238,0.15);color:var(--obs0);border:1px solid rgba(34,211,238,0.3)}
+.t-block.o1{background:rgba(167,139,250,0.15);color:var(--obs1);border:1px solid rgba(167,139,250,0.3)}
+.t-block.o2{background:rgba(245,158,11,0.15);color:var(--obs2);border:1px solid rgba(245,158,11,0.3)}
+.t-block.o3{background:rgba(236,72,153,0.15);color:var(--obs3);border:1px solid rgba(236,72,153,0.3)}
+
+.comparison-row{display:flex;align-items:center;gap:12px;margin:6px 0}
+.comparison-row .label-tag{
+  min-width:80px;font-size:.75rem;font-weight:700;color:var(--text2);text-align:right;flex-shrink:0;
+}
+.match-indicator{display:flex;gap:4px;overflow-x:auto;padding:4px 0}
+.match-indicator .dot{
+  min-width:36px;height:10px;border-radius:4px;flex-shrink:0;
+}
+.match-indicator .dot.ok{background:var(--exp)}
+.match-indicator .dot.fail{background:var(--rec)}
+
+/* ===== TRELLIS TABLE ===== */
+.trellis-container{overflow-x:auto;margin:16px 0}
+.trellis-table{
+  border-collapse:collapse;font-size:.72rem;white-space:nowrap;
+}
+.trellis-table th,.trellis-table td{
+  padding:6px 10px;border:1px solid var(--border);text-align:center;
+}
+.trellis-table th{background:rgba(79,124,255,0.08);color:var(--primary);font-weight:600;position:sticky;left:0;z-index:2}
+.trellis-table td{color:var(--text2)}
+.trellis-table thead th{position:sticky;top:0;z-index:3;background:var(--card-solid)}
+
+/* ===== STATS GRID ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin:20px 0}
+.stat-card{
+  background:rgba(79,124,255,0.06);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:20px;text-align:center;
+}
+.stat-card .stat-value{font-size:1.8rem;font-weight:800;background:var(--primary-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-card .stat-label{font-size:.78rem;color:var(--text2);margin-top:4px}
+
+/* ===== CANVAS CHARTS ===== */
+.chart-container{
+  background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:16px;margin:20px 0;
+}
+.chart-container canvas{width:100%!important;height:auto!important}
+
+/* ===== CONFUSION MATRIX ===== */
+.confusion-grid{
+  display:grid;grid-template-columns:auto repeat(3,1fr);gap:2px;max-width:500px;margin:20px auto;
+}
+.conf-cell{
+  padding:16px;text-align:center;border-radius:6px;font-weight:700;font-size:1rem;
+}
+.conf-header{
+  padding:12px;text-align:center;font-weight:700;font-size:.82rem;color:var(--text2);
+}
+
+/* ===== CONCLUSIONS ===== */
+.conclusion-item{
+  display:flex;gap:16px;align-items:flex-start;padding:20px 0;
+  border-bottom:1px solid var(--border);
+}
+.conclusion-item:last-child{border:none}
+.conclusion-item .c-icon{
+  width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;background:rgba(79,124,255,0.1);
+}
+.conclusion-item p{color:var(--text2);font-size:.92rem}
+.conclusion-item strong{color:var(--text)}
+
+/* ===== FOOTER ===== */
+.footer{
+  text-align:center;padding:40px 24px;border-top:1px solid var(--border);
+  color:var(--text3);font-size:.85rem;
+}
+.footer span{background:var(--primary-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .section{padding:48px 0}
+  .card{padding:20px}
+  .controls-bar{flex-direction:column;align-items:stretch}
+  .control-group input[type=number]{width:100%}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .hmm-diagram .states-row,.hmm-diagram .obs-row{gap:20px;flex-wrap:wrap}
+  .state-node{width:80px;height:80px;font-size:.72rem}
+}
+
+/* ===== HIDDEN ===== */
+.hidden{display:none!important}
+.results-section{animation:fadeInUp .6s ease both}
+</style>
+</head>
+<body>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="badge">Hidden Markov Model</span>
+    <h1>Modelo Oculto de Markov<br>(HMM)</h1>
+    <p class="subtitle">Simulación de Condición Económica en el Sector Bancario</p>
+    <p class="author">Alejandro Arango Calderón</p>
+    <div class="scroll-hint">
+      <span>Desplázate para explorar</span>
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== MARCO TEÓRICO ==================== -->
+<section class="section" id="theory">
+  <div class="container">
+    <h2 class="section-title">📚 Marco Teórico</h2>
+    <p class="section-sub">Fundamentos matemáticos del Modelo Oculto de Markov y su diferencia con las Cadenas de Markov clásicas.</p>
+
+    <div class="grid-2" style="margin-bottom:32px">
+      <div class="card theory-card">
+        <div class="icon-circle" style="background:rgba(79,124,255,0.12);color:var(--primary)">🔗</div>
+        <div>
+          <h3>Cadena de Markov</h3>
+          <p>Un proceso estocástico donde la probabilidad del siguiente estado depende <strong>únicamente</strong> del estado actual (propiedad de Markov). Los estados son <em>directamente observables</em>. Ejemplo: el clima de mañana depende solo del clima de hoy.</p>
+        </div>
+      </div>
+      <div class="card theory-card">
+        <div class="icon-circle" style="background:rgba(139,92,246,0.12);color:var(--accent-purple)">🔮</div>
+        <div>
+          <h3>Modelo Oculto de Markov (HMM)</h3>
+          <p>Extensión donde los estados son <strong>no observables</strong> (ocultos). Solo se observan señales (emisiones) que dependen probabilísticamente del estado oculto. Se debe <em>inferir</em> la secuencia de estados a partir de las observaciones.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:6px">Diferencia Clave</h3>
+      <p style="color:var(--text2);font-size:.92rem;margin-bottom:20px">
+        En una <strong>Cadena de Markov</strong>, observamos directamente los estados. En un <strong>HMM</strong>, los estados están ocultos y solo vemos las emisiones. La relación es: los estados siguen una cadena de Markov internamente, y cada estado genera una observación según una distribución de emisión.
+      </p>
+      <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:6px">Propiedad de Markov</h3>
+      <p style="color:var(--text2);font-size:.92rem;margin-bottom:24px">
+        <em>P(X<sub>t+1</sub> | X<sub>t</sub>, X<sub>t−1</sub>, …, X<sub>1</sub>) = P(X<sub>t+1</sub> | X<sub>t</sub>)</em> — El futuro es condicionalmente independiente del pasado dado el presente. Esta propiedad simplifica enormemente el modelado y permite algoritmos eficientes como Forward y Viterbi.
+      </p>
+
+      <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:16px">Los 5 Componentes: λ = (S, O, π, A, B)</h3>
+      <div class="component-grid">
+        <div class="comp-item">
+          <div class="symbol">S</div>
+          <div class="label">Conjunto de estados ocultos<br>{s₁, s₂, …, sₙ}</div>
+        </div>
+        <div class="comp-item">
+          <div class="symbol">O</div>
+          <div class="label">Conjunto de observaciones<br>{o₁, o₂, …, oₘ}</div>
+        </div>
+        <div class="comp-item">
+          <div class="symbol">π</div>
+          <div class="label">Distribución inicial<br>P(X₁ = sᵢ)</div>
+        </div>
+        <div class="comp-item">
+          <div class="symbol">A</div>
+          <div class="label">Matriz de transición<br>P(Xₜ₊₁ = sⱼ | Xₜ = sᵢ)</div>
+        </div>
+        <div class="comp-item">
+          <div class="symbol">B</div>
+          <div class="label">Matriz de emisión<br>P(Oₜ = oₖ | Xₜ = sᵢ)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+      <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:6px">¿Por qué usar HMMs?</h3>
+      <p style="color:var(--text2);font-size:.92rem;margin-bottom:16px">
+        Los HMM son ideales cuando el fenómeno que queremos estudiar <strong>no es directamente observable</strong>, pero genera señales medibles. Son ampliamente usados en:
+      </p>
+      <ul style="color:var(--text2);font-size:.92rem;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px">
+        <li>🗣️ Reconocimiento de voz</li>
+        <li>🧬 Bioinformática (secuencias de ADN)</li>
+        <li>📈 Modelos financieros</li>
+        <li>🌦️ Predicción del clima</li>
+        <li>📝 Procesamiento de lenguaje natural</li>
+        <li>🏦 Análisis del sector bancario</li>
+      </ul>
+    </div>
+
+    <!-- HMM DIAGRAM -->
+    <div class="card" style="margin-top:24px">
+      <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:24px;text-align:center">Diagrama Estructural del HMM</h3>
+      <div class="hmm-diagram">
+        <svg class="arrow-layer" id="diagramSvg" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id="arrowT" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="rgba(79,124,255,0.5)"/></marker>
+            <marker id="arrowE" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="rgba(139,92,246,0.4)"/></marker>
+          </defs>
+          <!-- Transition arrows -->
+          <path d="M210 70 Q300 10 390 70" stroke="rgba(79,124,255,0.35)" stroke-width="2" fill="none" marker-end="url(#arrowT)"/>
+          <path d="M390 70 Q300 10 210 70" stroke="rgba(79,124,255,0.35)" stroke-width="2" fill="none" marker-end="url(#arrowT)"/>
+          <path d="M410 90 Q500 30 590 70" stroke="rgba(79,124,255,0.35)" stroke-width="2" fill="none" marker-end="url(#arrowT)"/>
+          <path d="M590 70 Q500 30 410 90" stroke="rgba(79,124,255,0.35)" stroke-width="2" fill="none" marker-end="url(#arrowT)"/>
+          <!-- Self loops -->
+          <path d="M160 55 Q140 10 200 55" stroke="rgba(79,124,255,0.25)" stroke-width="1.5" fill="none" marker-end="url(#arrowT)"/>
+          <path d="M365 55 Q345 10 390 55" stroke="rgba(79,124,255,0.25)" stroke-width="1.5" fill="none" marker-end="url(#arrowT)"/>
+          <path d="M565 55 Q545 10 600 55" stroke="rgba(79,124,255,0.25)" stroke-width="1.5" fill="none" marker-end="url(#arrowT)"/>
+          <!-- Emission arrows -->
+          <line x1="180" y1="130" x2="100" y2="210" stroke="rgba(139,92,246,0.3)" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowE)"/>
+          <line x1="200" y1="130" x2="280" y2="210" stroke="rgba(139,92,246,0.3)" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowE)"/>
+          <line x1="400" y1="130" x2="280" y2="210" stroke="rgba(139,92,246,0.3)" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowE)"/>
+          <line x1="400" y1="130" x2="500" y2="210" stroke="rgba(139,92,246,0.3)" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowE)"/>
+          <line x1="600" y1="130" x2="500" y2="210" stroke="rgba(139,92,246,0.3)" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowE)"/>
+          <line x1="600" y1="130" x2="700" y2="210" stroke="rgba(139,92,246,0.3)" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowE)"/>
+          <!-- Labels -->
+          <text x="400" y="16" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="11" font-family="Inter" font-weight="600">ESTADOS OCULTOS</text>
+          <text x="400" y="206" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="11" font-family="Inter" font-weight="600">OBSERVACIONES</text>
+          <text x="300" y="38" text-anchor="middle" fill="rgba(79,124,255,0.5)" font-size="9" font-family="Inter">A</text>
+          <text x="500" y="38" text-anchor="middle" fill="rgba(79,124,255,0.5)" font-size="9" font-family="Inter">A</text>
+          <text x="140" y="180" text-anchor="middle" fill="rgba(139,92,246,0.5)" font-size="9" font-family="Inter">B</text>
+          <text x="650" y="180" text-anchor="middle" fill="rgba(139,92,246,0.5)" font-size="9" font-family="Inter">B</text>
+          <!-- State circles -->
+          <circle cx="190" cy="90" r="40" fill="rgba(52,211,153,0.12)" stroke="#34d399" stroke-width="2.5"/>
+          <text x="190" y="86" text-anchor="middle" fill="#34d399" font-size="11" font-family="Inter" font-weight="700">Expan-</text>
+          <text x="190" y="100" text-anchor="middle" fill="#34d399" font-size="11" font-family="Inter" font-weight="700">sión</text>
+          <circle cx="400" cy="90" r="40" fill="rgba(79,124,255,0.12)" stroke="#4f7cff" stroke-width="2.5"/>
+          <text x="400" y="94" text-anchor="middle" fill="#4f7cff" font-size="11" font-family="Inter" font-weight="700">Estable</text>
+          <circle cx="610" cy="90" r="40" fill="rgba(244,63,94,0.12)" stroke="#f43f5e" stroke-width="2.5"/>
+          <text x="610" y="86" text-anchor="middle" fill="#f43f5e" font-size="11" font-family="Inter" font-weight="700">Rece-</text>
+          <text x="610" y="100" text-anchor="middle" fill="#f43f5e" font-size="11" font-family="Inter" font-weight="700">sión</text>
+          <!-- Observation boxes -->
+          <rect x="50" y="220" width="100" height="36" rx="8" fill="rgba(34,211,238,0.12)" stroke="#22d3ee" stroke-width="1.5"/>
+          <text x="100" y="242" text-anchor="middle" fill="#22d3ee" font-size="9" font-family="Inter" font-weight="600">Flujo Alto</text>
+          <rect x="230" y="220" width="100" height="36" rx="8" fill="rgba(167,139,250,0.12)" stroke="#a78bfa" stroke-width="1.5"/>
+          <text x="280" y="242" text-anchor="middle" fill="#a78bfa" font-size="9" font-family="Inter" font-weight="600">Flujo Normal</text>
+          <rect x="450" y="220" width="100" height="36" rx="8" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="500" y="242" text-anchor="middle" fill="#f59e0b" font-size="9" font-family="Inter" font-weight="600">Flujo Bajo</text>
+          <rect x="640" y="220" width="120" height="36" rx="8" fill="rgba(236,72,153,0.12)" stroke="#ec4899" stroke-width="1.5"/>
+          <text x="700" y="242" text-anchor="middle" fill="#ec4899" font-size="9" font-family="Inter" font-weight="600">Retiros Masivos</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FORMULACIÓN DEL PROBLEMA ==================== -->
+<section class="section" id="problem" style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">🏦 Formulación del Problema</h2>
+    <p class="section-sub">Escenario: Condición Económica observada desde una sucursal bancaria.</p>
+
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:12px">¿Por qué este escenario es un HMM?</h3>
+      <p style="color:var(--text2);font-size:.92rem">
+        Los empleados de una sucursal bancaria <strong>no pueden observar directamente</strong> la condición económica del país (expansión, estabilidad o recesión). Sin embargo, pueden medir <strong>señales indirectas</strong>: el flujo de clientes, el volumen de transacciones y los patrones de retiros. Estas observaciones están correlacionadas probabilísticamente con el estado económico oculto, lo que constituye un modelo HMM perfecto.
+      </p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:16px">🔒 Estados Ocultos (S)</h3>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--exp);margin-top:6px;flex-shrink:0"></span>
+            <div><strong style="color:var(--exp)">Expansión</strong><br><span style="color:var(--text2);font-size:.88rem">Economía en crecimiento. Mayor inversión, solicitudes de crédito, apertura de cuentas y optimismo financiero.</span></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--est);margin-top:6px;flex-shrink:0"></span>
+            <div><strong style="color:var(--est)">Estable</strong><br><span style="color:var(--text2);font-size:.88rem">Condiciones económicas normales. Operaciones regulares, flujo predecible de clientes.</span></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--rec);margin-top:6px;flex-shrink:0"></span>
+            <div><strong style="color:var(--rec)">Recesión</strong><br><span style="color:var(--text2);font-size:.88rem">Desaceleración económica. Retiros de ahorros, menor inversión, posible pánico bancario.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:16px">👁️ Observaciones (O)</h3>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="width:12px;height:12px;border-radius:4px;background:var(--obs0);margin-top:6px;flex-shrink:0"></span>
+            <div><strong style="color:var(--obs0)">Flujo Alto de Clientes</strong><br><span style="color:var(--text2);font-size:.88rem">Muchos clientes, alto volumen de transacciones, solicitudes de crédito.</span></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="width:12px;height:12px;border-radius:4px;background:var(--obs1);margin-top:6px;flex-shrink:0"></span>
+            <div><strong style="color:var(--obs1)">Flujo Normal</strong><br><span style="color:var(--text2);font-size:.88rem">Cantidad promedio de clientes y operaciones regulares.</span></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="width:12px;height:12px;border-radius:4px;background:var(--obs2);margin-top:6px;flex-shrink:0"></span>
+            <div><strong style="color:var(--obs2)">Flujo Bajo</strong><br><span style="color:var(--text2);font-size:.88rem">Pocos clientes, operaciones mínimas, menor actividad.</span></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="width:12px;height:12px;border-radius:4px;background:var(--obs3);margin-top:6px;flex-shrink:0"></span>
+            <div><strong style="color:var(--obs3)">Retiros Masivos</strong><br><span style="color:var(--text2);font-size:.88rem">Oleada de retiros de ahorros, indicador de pánico financiero.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PARÁMETROS DEL MODELO ==================== -->
+<section class="section" id="params" style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">⚙️ Parámetros del Modelo</h2>
+    <p class="section-sub">Define las matrices de probabilidad. Las filas deben sumar 1.0 para ser válidas. Puedes editar los valores.</p>
+
+    <!-- PI -->
+    <div class="card matrix-wrap">
+      <h3>Distribución Inicial — π</h3>
+      <p class="matrix-desc">Probabilidad de que el sistema comience en cada estado oculto.</p>
+      <table class="matrix-table" id="piTable">
+        <thead><tr><th>Expansión</th><th>Estable</th><th>Recesión</th><th>Σ</th></tr></thead>
+        <tbody><tr>
+          <td><input type="number" step="0.01" min="0" max="1" value="0.30" data-pi="0"></td>
+          <td><input type="number" step="0.01" min="0" max="1" value="0.50" data-pi="1"></td>
+          <td><input type="number" step="0.01" min="0" max="1" value="0.20" data-pi="2"></td>
+          <td class="row-sum" id="piSum">1.00</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <!-- A -->
+    <div class="card matrix-wrap">
+      <h3>Matriz de Transición — A (3×3)</h3>
+      <p class="matrix-desc">P(estado siguiente | estado actual). Cada fila describe las transiciones desde un estado.</p>
+      <table class="matrix-table" id="aTable">
+        <thead><tr><th>Desde \ Hacia</th><th>Expansión</th><th>Estable</th><th>Recesión</th><th>Σ</th></tr></thead>
+        <tbody>
+          <tr>
+            <th>Expansión</th>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.60" data-a="0,0"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.30" data-a="0,1"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.10" data-a="0,2"></td>
+            <td class="row-sum" id="aSum0">1.00</td>
+          </tr>
+          <tr>
+            <th>Estable</th>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.20" data-a="1,0"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.60" data-a="1,1"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.20" data-a="1,2"></td>
+            <td class="row-sum" id="aSum1">1.00</td>
+          </tr>
+          <tr>
+            <th>Recesión</th>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.10" data-a="2,0"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.30" data-a="2,1"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.60" data-a="2,2"></td>
+            <td class="row-sum" id="aSum2">1.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- B -->
+    <div class="card matrix-wrap">
+      <h3>Matriz de Emisión — B (3×4)</h3>
+      <p class="matrix-desc">P(observación | estado oculto). Cada fila indica la probabilidad de cada señal observable dado un estado.</p>
+      <table class="matrix-table" id="bTable">
+        <thead><tr><th>Estado \ Obs.</th><th>Flujo Alto</th><th>Flujo Normal</th><th>Flujo Bajo</th><th>Retiros Masivos</th><th>Σ</th></tr></thead>
+        <tbody>
+          <tr>
+            <th>Expansión</th>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.50" data-b="0,0"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.30" data-b="0,1"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.10" data-b="0,2"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.10" data-b="0,3"></td>
+            <td class="row-sum" id="bSum0">1.00</td>
+          </tr>
+          <tr>
+            <th>Estable</th>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.20" data-b="1,0"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.50" data-b="1,1"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.20" data-b="1,2"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.10" data-b="1,3"></td>
+            <td class="row-sum" id="bSum1">1.00</td>
+          </tr>
+          <tr>
+            <th>Recesión</th>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.05" data-b="2,0"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.15" data-b="2,1"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.30" data-b="2,2"></td>
+            <td><input type="number" step="0.01" min="0" max="1" value="0.50" data-b="2,3"></td>
+            <td class="row-sum" id="bSum2">1.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CONTROLES ==================== -->
+<section class="section" id="controls" style="padding-top:0">
+  <div class="container">
+    <div class="card">
+      <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:20px">🎮 Controles de Simulación</h3>
+      <div class="controls-bar">
+        <div class="control-group">
+          <label for="numSteps">Pasos de tiempo (T)</label>
+          <input type="number" id="numSteps" value="30" min="5" max="200">
+        </div>
+        <div class="control-group">
+          <label for="numSims">Simulaciones Monte Carlo (N)</label>
+          <input type="number" id="numSims" value="100" min="10" max="5000">
+        </div>
+        <button class="btn-primary" id="runBtn" onclick="runFullSimulation()">🚀 Ejecutar Simulación</button>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p id="progressText" style="margin-top:8px;font-size:.82rem;color:var(--text3);display:none"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== RESULTADOS ==================== -->
+<div id="resultsContainer" class="hidden">
+
+<!-- 6a: Secuencia Simulada -->
+<section class="section results-section" id="resTimeline">
+  <div class="container">
+    <h2 class="section-title">🎲 Secuencia Simulada</h2>
+    <p class="section-sub">Una ejecución de la cadena HMM mostrando estados ocultos reales y observaciones generadas.</p>
+    <div class="card">
+      <div style="margin-bottom:8px"><span style="font-size:.82rem;color:var(--text2);font-weight:600">Estados Ocultos (reales):</span></div>
+      <div class="timeline-strip" id="statesTimeline"></div>
+      <div style="margin:12px 0 8px"><span style="font-size:.82rem;color:var(--text2);font-weight:600">Observaciones:</span></div>
+      <div class="timeline-strip" id="obsTimeline"></div>
+      <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px" id="legendTimeline"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6b: Forward Algorithm -->
+<section class="section results-section" id="resForward" style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">📈 Algoritmo Forward</h2>
+    <p class="section-sub">Calcula P(O|λ): la probabilidad de observar la secuencia dada el modelo.</p>
+    <div class="card">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="fwdProb">—</div>
+          <div class="stat-label">P(O|λ)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="fwdLogProb">—</div>
+          <div class="stat-label">log P(O|λ)</div>
+        </div>
+      </div>
+      <p style="color:var(--text2);font-size:.88rem;margin-bottom:16px">
+        <strong>Interpretación:</strong> La probabilidad Forward indica qué tan probable es la secuencia de observaciones bajo el modelo λ. Un valor más alto indica que el modelo explica bien los datos observados. Usamos log-probabilidad para evitar underflow numérico con secuencias largas.
+      </p>
+      <h4 style="font-size:.95rem;font-weight:700;margin-bottom:8px">Trellis Forward — α<sub>t</sub>(i)</h4>
+      <p style="color:var(--text2);font-size:.82rem;margin-bottom:12px">Cada celda muestra α<sub>t</sub>(i) = P(O₁…Oₜ, Xₜ=sᵢ | λ). Se muestran los primeros pasos.</p>
+      <div class="trellis-container" id="fwdTrellis"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6c: Viterbi Algorithm -->
+<section class="section results-section" id="resViterbi" style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">🔍 Algoritmo de Viterbi</h2>
+    <p class="section-sub">Encuentra la secuencia de estados ocultos más probable dada la secuencia de observaciones.</p>
+    <div class="card">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="vitAccuracy">—</div>
+          <div class="stat-label">Precisión Viterbi</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="vitLogProb">—</div>
+          <div class="stat-label">log P(Q*|O,λ)</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:.95rem;font-weight:700;margin:20px 0 8px">Comparación: Estados Reales vs. Inferidos</h4>
+      <div id="viterbiComparison"></div>
+
+      <h4 style="font-size:.95rem;font-weight:700;margin:24px 0 8px">Trellis Viterbi — δ<sub>t</sub>(i)</h4>
+      <p style="color:var(--text2);font-size:.82rem;margin-bottom:12px">Cada celda muestra δ<sub>t</sub>(i) = máx P de llegar al estado i en t. Se muestran los primeros pasos.</p>
+      <div class="trellis-container" id="vitTrellis"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6d: Monte Carlo -->
+<section class="section results-section" id="resMonteCarlo" style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">🎯 Simulación Monte Carlo</h2>
+    <p class="section-sub">Estadísticas agregadas sobre N ejecuciones independientes del HMM.</p>
+    <div class="card">
+      <div class="stats-grid" id="mcStats"></div>
+      <h4 style="font-size:.95rem;font-weight:700;margin:20px 0 12px">Histograma de Precisión Viterbi</h4>
+      <div class="chart-container"><canvas id="histCanvas" width="800" height="340"></canvas></div>
+      <h4 style="font-size:.95rem;font-weight:700;margin:20px 0 12px">Distribución Promedio de Estados (Empírica)</h4>
+      <div class="chart-container"><canvas id="stateDistCanvas" width="800" height="300"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6e: Distribución Estacionaria -->
+<section class="section results-section" id="resStationary" style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">⚖️ Distribución Estacionaria</h2>
+    <p class="section-sub">La distribución de largo plazo a la que converge la cadena de Markov.</p>
+    <div class="card">
+      <p style="color:var(--text2);font-size:.88rem;margin-bottom:16px">
+        Calculada mediante multiplicación repetida de la matriz A: π<sub>∞</sub> = lim π·A<sup>n</sup>. La distribución estacionaria es independiente del estado inicial.
+      </p>
+      <div class="stats-grid" id="stationaryStats"></div>
+      <h4 style="font-size:.95rem;font-weight:700;margin:20px 0 12px">Convergencia de la Distribución</h4>
+      <div class="chart-container"><canvas id="convergenceCanvas" width="800" height="340"></canvas></div>
+      <h4 style="font-size:.95rem;font-weight:700;margin:20px 0 12px">Teórica vs. Empírica</h4>
+      <div class="chart-container"><canvas id="compDistCanvas" width="800" height="300"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6f: Matriz de Confusión -->
+<section class="section results-section" id="resConfusion" style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">🧮 Matriz de Confusión</h2>
+    <p class="section-sub">Filas = estados reales, Columnas = estados inferidos por Viterbi (agregado de Monte Carlo).</p>
+    <div class="card">
+      <div id="confusionMatrix"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7: Conclusiones -->
+<section class="section results-section" id="resConclusions" style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">📋 Conclusiones</h2>
+    <p class="section-sub">Análisis generado dinámicamente basado en los resultados de la simulación.</p>
+    <div class="card" id="conclusionsContent"></div>
+  </div>
+</section>
+
+</div><!-- /resultsContainer -->
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer">
+  <p><span>Alejandro Arango Calderón</span> — Modelo Oculto de Markov — 2026</p>
+</footer>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+(function(){
+'use strict';
+
+/* ===== CONSTANTS ===== */
+const STATE_NAMES = ['Expansión','Estable','Recesión'];
+const STATE_SHORT = ['Exp','Est','Rec'];
+const OBS_NAMES = ['Flujo Alto','Flujo Normal','Flujo Bajo','Retiros Masivos'];
+const OBS_SHORT = ['Alto','Norm','Bajo','Ret'];
+const STATE_COLORS = ['#34d399','#4f7cff','#f43f5e'];
+const STATE_BG = ['rgba(52,211,153,0.2)','rgba(79,124,255,0.2)','rgba(244,63,94,0.2)'];
+const OBS_COLORS = ['#22d3ee','#a78bfa','#f59e0b','#ec4899'];
+const N_STATES = 3, N_OBS = 4;
+
+/* ===== READ MATRICES FROM UI ===== */
+function readPi(){
+  const pi=[];
+  for(let i=0;i<N_STATES;i++) pi.push(parseFloat(document.querySelector(`[data-pi="${i}"]`).value)||0);
+  return pi;
+}
+function readA(){
+  const A=Array.from({length:N_STATES},()=>new Array(N_STATES).fill(0));
+  for(let i=0;i<N_STATES;i++) for(let j=0;j<N_STATES;j++)
+    A[i][j]=parseFloat(document.querySelector(`[data-a="${i},${j}"]`).value)||0;
+  return A;
+}
+function readB(){
+  const B=Array.from({length:N_STATES},()=>new Array(N_OBS).fill(0));
+  for(let i=0;i<N_STATES;i++) for(let j=0;j<N_OBS;j++)
+    B[i][j]=parseFloat(document.querySelector(`[data-b="${i},${j}"]`).value)||0;
+  return B;
+}
+
+/* ===== ROW SUM VALIDATION ===== */
+function updateSums(){
+  // Pi
+  const pi=readPi();const ps=pi.reduce((a,b)=>a+b,0);
+  const pEl=document.getElementById('piSum');pEl.textContent=ps.toFixed(2);
+  pEl.className='row-sum '+(Math.abs(ps-1)<0.015?'valid':'invalid');
+  // A
+  const A=readA();
+  for(let i=0;i<N_STATES;i++){const s=A[i].reduce((a,b)=>a+b,0);const el=document.getElementById('aSum'+i);el.textContent=s.toFixed(2);el.className='row-sum '+(Math.abs(s-1)<0.015?'valid':'invalid');}
+  // B
+  const B=readB();
+  for(let i=0;i<N_STATES;i++){const s=B[i].reduce((a,b)=>a+b,0);const el=document.getElementById('bSum'+i);el.textContent=s.toFixed(2);el.className='row-sum '+(Math.abs(s-1)<0.015?'valid':'invalid');}
+}
+document.querySelectorAll('.matrix-table input').forEach(inp=>inp.addEventListener('input',updateSums));
+updateSums();
+
+/* ===== SAMPLING ===== */
+function sampleFromDistribution(probs){
+  let r=Math.random(),cum=0;
+  for(let i=0;i<probs.length;i++){cum+=probs[i];if(r<cum)return i;}
+  return probs.length-1;
+}
+
+/* ===== SIMULATE HMM ===== */
+function simulateHMM(pi,A,B,T){
+  const states=[],observations=[];
+  states.push(sampleFromDistribution(pi));
+  observations.push(sampleFromDistribution(B[states[0]]));
+  for(let t=1;t<T;t++){
+    states.push(sampleFromDistribution(A[states[t-1]]));
+    observations.push(sampleFromDistribution(B[states[t]]));
+  }
+  return {states,observations};
+}
+
+/* ===== FORWARD ALGORITHM ===== */
+function forward(observations,pi,A,B){
+  const T=observations.length,N=pi.length;
+  const alpha=Array.from({length:T},()=>new Array(N).fill(0));
+  // Init
+  for(let i=0;i<N;i++) alpha[0][i]=pi[i]*B[i][observations[0]];
+  // Induction
+  for(let t=1;t<T;t++){
+    for(let j=0;j<N;j++){
+      let sum=0;
+      for(let i=0;i<N;i++) sum+=alpha[t-1][i]*A[i][j];
+      alpha[t][j]=sum*B[j][observations[t]];
+    }
+  }
+  return alpha;
+}
+
+/* ===== FORWARD WITH SCALING (for numerical stability) ===== */
+function forwardScaled(observations,pi,A,B){
+  const T=observations.length,N=pi.length;
+  const alpha=Array.from({length:T},()=>new Array(N).fill(0));
+  const c=new Array(T).fill(0);
+  // Init
+  for(let i=0;i<N;i++) alpha[0][i]=pi[i]*B[i][observations[0]];
+  c[0]=alpha[0].reduce((a,b)=>a+b,0);
+  if(c[0]>0) for(let i=0;i<N;i++) alpha[0][i]/=c[0];
+  // Induction
+  for(let t=1;t<T;t++){
+    for(let j=0;j<N;j++){
+      let sum=0;
+      for(let i=0;i<N;i++) sum+=alpha[t-1][i]*A[i][j];
+      alpha[t][j]=sum*B[j][observations[t]];
+    }
+    c[t]=alpha[t].reduce((a,b)=>a+b,0);
+    if(c[t]>0) for(let j=0;j<N;j++) alpha[t][j]/=c[t];
+  }
+  let logProb=0;
+  for(let t=0;t<T;t++) logProb+=Math.log(c[t]>0?c[t]:1e-300);
+  return {alpha,c,logProb};
+}
+
+/* ===== VITERBI ALGORITHM ===== */
+function viterbi(observations,pi,A,B){
+  const T=observations.length,N=pi.length;
+  const delta=Array.from({length:T},()=>new Array(N).fill(0));
+  const psi=Array.from({length:T},()=>new Array(N).fill(0));
+  // Init
+  for(let i=0;i<N;i++){delta[0][i]=pi[i]*B[i][observations[0]];psi[0][i]=0;}
+  // Recursion
+  for(let t=1;t<T;t++){
+    for(let j=0;j<N;j++){
+      let maxVal=-1,maxIdx=0;
+      for(let i=0;i<N;i++){
+        const val=delta[t-1][i]*A[i][j];
+        if(val>maxVal){maxVal=val;maxIdx=i;}
+      }
+      delta[t][j]=maxVal*B[j][observations[t]];
+      psi[t][j]=maxIdx;
+    }
+    // Scale delta to prevent underflow
+    const mx=Math.max(...delta[t]);
+    if(mx>0) for(let j=0;j<N;j++) delta[t][j]/=mx;
+  }
+  // Backtrack
+  const path=new Array(T);
+  let maxVal=-1;
+  for(let i=0;i<N;i++){if(delta[T-1][i]>maxVal){maxVal=delta[T-1][i];path[T-1]=i;}}
+  for(let t=T-2;t>=0;t--) path[t]=psi[t+1][path[t+1]];
+  return {path,delta,psi,probability:maxVal};
+}
+
+/* ===== STATIONARY DISTRIBUTION ===== */
+function stationaryDistribution(A,maxIter){
+  const N=A.length;
+  let dist=new Array(N).fill(1/N);
+  const history=[dist.slice()];
+  for(let n=0;n<maxIter;n++){
+    const next=new Array(N).fill(0);
+    for(let j=0;j<N;j++) for(let i=0;i<N;i++) next[j]+=dist[i]*A[i][j];
+    dist=next;
+    history.push(dist.slice());
+  }
+  return {dist,history};
+}
+
+/* ===== DRAW HELPERS ===== */
+function clearCanvas(canvas){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  return ctx;
+}
+
+/* ===== DRAW HISTOGRAM ===== */
+function drawHistogram(canvasId,values,title){
+  const canvas=document.getElementById(canvasId);
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  const W=rect.width-32;const H=340;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  const pad={t:40,r:30,b:50,l:55};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+
+  // Bins
+  const nBins=20;const mn=Math.min(...values),mx=Math.max(...values);
+  const range=mx-mn||1;const binW=range/nBins;
+  const bins=new Array(nBins).fill(0);
+  values.forEach(v=>{let b=Math.floor((v-mn)/binW);if(b>=nBins)b=nBins-1;bins[b]++;});
+  const maxBin=Math.max(...bins);
+
+  // Title
+  ctx.font='600 13px Inter';ctx.fillStyle='#e8ecf4';ctx.textAlign='center';
+  ctx.fillText(title,W/2,20);
+
+  // Axes
+  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,H-pad.b);ctx.lineTo(W-pad.r,H-pad.b);ctx.stroke();
+
+  // Y axis labels
+  ctx.font='500 10px Inter';ctx.fillStyle='#8b95b0';ctx.textAlign='right';
+  const yTicks=5;
+  for(let i=0;i<=yTicks;i++){
+    const v=Math.round(maxBin*i/yTicks);
+    const y=H-pad.b-ch*i/yTicks;
+    ctx.fillText(v,pad.l-8,y+4);
+    if(i>0){ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}
+  }
+
+  // Bars
+  const bw=cw/nBins;
+  const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  grad.addColorStop(0,'#8b5cf6');grad.addColorStop(1,'#4f7cff');
+  bins.forEach((c,i)=>{
+    const bh=maxBin>0?(c/maxBin)*ch:0;
+    const x=pad.l+i*bw+1;const y=H-pad.b-bh;
+    ctx.fillStyle=grad;
+    ctx.beginPath();ctx.roundRect(x,y,bw-2,bh,3);ctx.fill();
+  });
+
+  // X labels
+  ctx.font='500 9px Inter';ctx.fillStyle='#8b95b0';ctx.textAlign='center';
+  for(let i=0;i<=nBins;i+=4){
+    const v=(mn+i*binW)*100;
+    ctx.fillText(v.toFixed(0)+'%',pad.l+i*bw,H-pad.b+18);
+  }
+  ctx.fillText('Precisión (%)',W/2,H-8);
+}
+
+/* ===== DRAW BAR CHART ===== */
+function drawBarChart(canvasId,groups,labels,colors,title,groupLabels){
+  const canvas=document.getElementById(canvasId);
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  const W=rect.width-32;const H=300;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  const pad={t:45,r:30,b:60,l:55};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const nGroups=groups.length;const barsPerGroup=groups[0].length;
+  const gw=cw/nGroups;const barW=gw/(barsPerGroup+1);
+
+  const maxV=Math.max(...groups.flat())*1.1||1;
+
+  ctx.font='600 13px Inter';ctx.fillStyle='#e8ecf4';ctx.textAlign='center';
+  ctx.fillText(title,W/2,20);
+
+  // Axes
+  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,H-pad.b);ctx.lineTo(W-pad.r,H-pad.b);ctx.stroke();
+
+  // Y
+  ctx.font='500 10px Inter';ctx.fillStyle='#8b95b0';ctx.textAlign='right';
+  for(let i=0;i<=5;i++){
+    const v=(maxV*i/5);const y=H-pad.b-ch*i/5;
+    ctx.fillText(v.toFixed(2),pad.l-8,y+4);
+    if(i>0){ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}
+  }
+
+  // Bars
+  groups.forEach((g,gi)=>{
+    const gx=pad.l+gi*gw;
+    g.forEach((v,bi)=>{
+      const bh=(v/maxV)*ch;
+      const x=gx+(bi+0.5)*barW;
+      const y=H-pad.b-bh;
+      ctx.fillStyle=colors[bi];
+      ctx.globalAlpha=0.85;
+      ctx.beginPath();ctx.roundRect(x,y,barW-4,bh,3);ctx.fill();
+      ctx.globalAlpha=1;
+      // Value label
+      ctx.font='600 9px Inter';ctx.fillStyle='#e8ecf4';ctx.textAlign='center';
+      ctx.fillText(v.toFixed(3),x+barW/2-2,y-6);
+    });
+    // Group label
+    ctx.font='500 10px Inter';ctx.fillStyle='#8b95b0';ctx.textAlign='center';
+    ctx.fillText(labels[gi],gx+gw/2,H-pad.b+18);
+  });
+
+  // Legend
+  if(groupLabels){
+    const lx=W/2-(groupLabels.length*80)/2;
+    groupLabels.forEach((l,i)=>{
+      ctx.fillStyle=colors[i];
+      ctx.fillRect(lx+i*100,H-pad.b+34,12,12);
+      ctx.font='500 10px Inter';ctx.fillStyle='#8b95b0';ctx.textAlign='left';
+      ctx.fillText(l,lx+i*100+16,H-pad.b+44);
+    });
+  }
+}
+
+/* ===== DRAW CONVERGENCE ===== */
+function drawConvergence(canvasId,history,title){
+  const canvas=document.getElementById(canvasId);
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  const W=rect.width-32;const H=340;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  const pad={t:45,r:30,b:50,l:55};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const T=history.length;
+
+  ctx.font='600 13px Inter';ctx.fillStyle='#e8ecf4';ctx.textAlign='center';
+  ctx.fillText(title,W/2,20);
+
+  // Axes
+  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,H-pad.b);ctx.lineTo(W-pad.r,H-pad.b);ctx.stroke();
+
+  // Y
+  ctx.font='500 10px Inter';ctx.fillStyle='#8b95b0';ctx.textAlign='right';
+  for(let i=0;i<=5;i++){
+    const v=(i/5);const y=H-pad.b-ch*i/5;
+    ctx.fillText(v.toFixed(1),pad.l-8,y+4);
+    if(i>0){ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}
+  }
+
+  // X labels
+  ctx.textAlign='center';
+  const xTicks=Math.min(T-1,10);
+  for(let i=0;i<=xTicks;i++){
+    const idx=Math.round(i*(T-1)/xTicks);
+    const x=pad.l+idx/(T-1)*cw;
+    ctx.fillText(idx,x,H-pad.b+18);
+  }
+  ctx.fillText('Iteración n (A^n)',W/2,H-8);
+
+  // Lines
+  for(let s=0;s<N_STATES;s++){
+    ctx.strokeStyle=STATE_COLORS[s];ctx.lineWidth=2.5;
+    ctx.beginPath();
+    for(let t=0;t<T;t++){
+      const x=pad.l+t/(T-1)*cw;
+      const y=H-pad.b-history[t][s]*ch;
+      t===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // End label
+    const lx=pad.l+(T-1)/(T-1)*cw+6;
+    const ly=H-pad.b-history[T-1][s]*ch;
+    ctx.font='600 10px Inter';ctx.fillStyle=STATE_COLORS[s];ctx.textAlign='left';
+    ctx.fillText(STATE_SHORT[s]+' '+history[T-1][s].toFixed(3),lx,ly+4);
+  }
+}
+
+/* ===== BUILD TRELLIS TABLE ===== */
+function buildTrellisHTML(data,maxCols){
+  const T=data.length;const cols=Math.min(T,maxCols||30);
+  let html='<table class="trellis-table"><thead><tr><th>t →</th>';
+  for(let t=0;t<cols;t++) html+=`<th>${t}</th>`;
+  if(cols<T) html+='<th>…</th>';
+  html+='</tr></thead><tbody>';
+  for(let s=0;s<N_STATES;s++){
+    html+=`<tr><th style="color:${STATE_COLORS[s]}">${STATE_SHORT[s]}</th>`;
+    for(let t=0;t<cols;t++){
+      const v=data[t][s];
+      const str=v<0.0001&&v>0?v.toExponential(1):v.toFixed(4);
+      html+=`<td>${str}</td>`;
+    }
+    if(cols<T) html+='<td>…</td>';
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  return html;
+}
+
+/* ===== RENDER TIMELINE ===== */
+function renderTimeline(containerId,seq,type){
+  const el=document.getElementById(containerId);
+  const names=type==='state'?STATE_SHORT:OBS_SHORT;
+  const cls=type==='state'?['s0','s1','s2']:['o0','o1','o2','o3'];
+  el.innerHTML=seq.map((v,i)=>`<div class="t-block ${cls[v]}" title="t=${i}: ${type==='state'?STATE_NAMES[v]:OBS_NAMES[v]}">${names[v]}</div>`).join('');
+}
+
+/* ===== RENDER VITERBI COMPARISON ===== */
+function renderViterbiComparison(realStates,inferredStates){
+  const el=document.getElementById('viterbiComparison');
+  const cls=['s0','s1','s2'];
+
+  let html='<div class="comparison-row"><span class="label-tag">Real</span><div class="timeline-strip">';
+  html+=realStates.map((v,i)=>`<div class="t-block ${cls[v]}" title="t=${i}: ${STATE_NAMES[v]}">${STATE_SHORT[v]}</div>`).join('');
+  html+='</div></div>';
+
+  html+='<div class="comparison-row"><span class="label-tag">Inferido</span><div class="timeline-strip">';
+  html+=inferredStates.map((v,i)=>`<div class="t-block ${cls[v]}" title="t=${i}: ${STATE_NAMES[v]}">${STATE_SHORT[v]}</div>`).join('');
+  html+='</div></div>';
+
+  html+='<div class="comparison-row"><span class="label-tag">Match</span><div class="match-indicator">';
+  html+=realStates.map((v,i)=>`<div class="dot ${v===inferredStates[i]?'ok':'fail'}" title="t=${i}: ${v===inferredStates[i]?'✓':'✗'}"></div>`).join('');
+  html+='</div></div>';
+
+  el.innerHTML=html;
+}
+
+/* ===== RENDER CONFUSION MATRIX ===== */
+function renderConfusionMatrix(matrix){
+  const el=document.getElementById('confusionMatrix');
+  const maxV=Math.max(...matrix.flat())||1;
+  let html='<div style="text-align:center;margin-bottom:12px;font-size:.82rem;color:var(--text2)">Filas: estado real — Columnas: estado inferido</div>';
+  html+='<div class="confusion-grid">';
+  // Header row
+  html+='<div class="conf-header"></div>';
+  for(let j=0;j<N_STATES;j++) html+=`<div class="conf-header" style="color:${STATE_COLORS[j]}">${STATE_SHORT[j]}</div>`;
+  // Data rows
+  for(let i=0;i<N_STATES;i++){
+    html+=`<div class="conf-header" style="color:${STATE_COLORS[i]}">${STATE_SHORT[i]}</div>`;
+    const rowTotal=matrix[i].reduce((a,b)=>a+b,0)||1;
+    for(let j=0;j<N_STATES;j++){
+      const v=matrix[i][j];
+      const pct=(v/rowTotal*100).toFixed(1);
+      const intensity=v/maxV;
+      const bg=i===j
+        ?`rgba(52,211,153,${0.1+intensity*0.5})`
+        :`rgba(244,63,94,${intensity*0.35})`;
+      html+=`<div class="conf-cell" style="background:${bg}" title="${STATE_NAMES[i]} → ${STATE_NAMES[j]}: ${v} (${pct}%)">${v}<br><span style="font-size:.72rem;font-weight:400;opacity:.7">${pct}%</span></div>`;
+    }
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+/* ===== GENERATE CONCLUSIONS ===== */
+function generateConclusions(mcAccuracies,confMatrix,stationaryDist,empiricalDist){
+  const el=document.getElementById('conclusionsContent');
+  const meanAcc=(mcAccuracies.reduce((a,b)=>a+b,0)/mcAccuracies.length*100).toFixed(1);
+  const stdAcc=(Math.sqrt(mcAccuracies.reduce((s,v)=>{const d=v-mcAccuracies.reduce((a,b)=>a+b,0)/mcAccuracies.length;return s+d*d;},0)/mcAccuracies.length)*100).toFixed(1);
+
+  // Find hardest state
+  const perStateAcc=[];
+  for(let i=0;i<N_STATES;i++){
+    const rowT=confMatrix[i].reduce((a,b)=>a+b,0)||1;
+    perStateAcc.push(confMatrix[i][i]/rowT);
+  }
+  const hardestIdx=perStateAcc.indexOf(Math.min(...perStateAcc));
+  const easiestIdx=perStateAcc.indexOf(Math.max(...perStateAcc));
+
+  const items=[
+    {icon:'📊',text:`<strong>Precisión promedio del algoritmo de Viterbi: ${meanAcc}%</strong> (σ = ${stdAcc}%). ${parseFloat(meanAcc)>=70?'El modelo logra inferir correctamente los estados ocultos en la mayoría de los casos, lo que valida la utilidad del HMM para este escenario bancario.':'La precisión moderada indica que las emisiones tienen solapamiento significativo entre estados, lo cual es realista en escenarios bancarios reales.'}`},
+    {icon:'🔍',text:`<strong>Estado más difícil de inferir: ${STATE_NAMES[hardestIdx]}</strong> (precisión: ${(perStateAcc[hardestIdx]*100).toFixed(1)}%). Esto ocurre porque sus emisiones se solapan con las de otros estados. El estado más fácil de identificar es <strong>${STATE_NAMES[easiestIdx]}</strong> (${(perStateAcc[easiestIdx]*100).toFixed(1)}%), ya que tiene un patrón de emisión más distintivo.`},
+    {icon:'⚖️',text:`<strong>Distribución estacionaria:</strong> Expansión=${stationaryDist[0].toFixed(3)}, Estable=${stationaryDist[1].toFixed(3)}, Recesión=${stationaryDist[2].toFixed(3)}. Esto indica que a largo plazo, la economía tiende a pasar ${(stationaryDist[1]*100).toFixed(0)}% del tiempo en estado Estable, lo cual es consistente con la realidad económica.`},
+    {icon:'📈',text:`<strong>Comparación teórica vs empírica:</strong> La distribución empírica (Monte Carlo) se acerca a la teórica (estacionaria), validando la convergencia del modelo. La diferencia máxima es ${Math.max(...stationaryDist.map((v,i)=>Math.abs(v-empiricalDist[i]))).toFixed(4)}, lo que indica convergencia adecuada.`},
+    {icon:'🏦',text:`<strong>Implicaciones prácticas para el sector bancario:</strong> Este modelo permite a los bancos inferir la condición económica subyacente a partir de indicadores operativos observables. Esto puede ayudar en: (1) ajustar reservas de liquidez cuando se detecta tendencia a recesión, (2) preparar campañas de crédito al detectar expansión, y (3) gestionar riesgos de manera proactiva basándose en las transiciones de estado estimadas.`},
+    {icon:'🧮',text:`<strong>Sobre los algoritmos implementados:</strong> El algoritmo Forward calcula la verosimilitud de las observaciones dado el modelo (evaluación), mientras que Viterbi encuentra la secuencia de estados más probable (decodificación). Ambos utilizan programación dinámica con complejidad O(T·N²), lo que los hace eficientes incluso para secuencias largas.`}
+  ];
+
+  el.innerHTML=items.map(it=>`<div class="conclusion-item"><div class="c-icon">${it.icon}</div><div><p>${it.text}</p></div></div>`).join('');
+}
+
+/* ===== MAIN SIMULATION ===== */
+async function runFullSimulation(){
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;btn.textContent='⏳ Simulando...';
+  const pw=document.getElementById('progressWrap');pw.classList.add('active');
+  const pb=document.getElementById('progressBar');
+  const pt=document.getElementById('progressText');pt.style.display='block';
+
+  await new Promise(r=>setTimeout(r,50));
+
+  const pi=readPi(),A=readA(),B=readB();
+  const T=parseInt(document.getElementById('numSteps').value)||30;
+  const N=parseInt(document.getElementById('numSims').value)||100;
+
+  // === 1. Single simulation ===
+  pb.style.width='5%';pt.textContent='Generando secuencia HMM...';
+  await new Promise(r=>setTimeout(r,30));
+
+  const sim=simulateHMM(pi,A,B,T);
+  renderTimeline('statesTimeline',sim.states,'state');
+  renderTimeline('obsTimeline',sim.observations,'obs');
+
+  // Legend
+  const legEl=document.getElementById('legendTimeline');
+  let legHTML='';
+  STATE_NAMES.forEach((n,i)=>legHTML+=`<span style="font-size:.75rem;color:${STATE_COLORS[i]}">● ${n}</span>`);
+  OBS_NAMES.forEach((n,i)=>legHTML+=`<span style="font-size:.75rem;color:${OBS_COLORS[i]}">■ ${n}</span>`);
+  legEl.innerHTML=legHTML;
+
+  // === 2. Forward ===
+  pb.style.width='15%';pt.textContent='Ejecutando algoritmo Forward...';
+  await new Promise(r=>setTimeout(r,30));
+
+  const fwdResult=forwardScaled(sim.observations,pi,A,B);
+  const fwdAlphaRaw=forward(sim.observations,pi,A,B);
+  const probObs=fwdAlphaRaw[T-1].reduce((a,b)=>a+b,0);
+  document.getElementById('fwdProb').textContent=probObs>1e-10?probObs.toExponential(4):'≈0';
+  document.getElementById('fwdLogProb').textContent=fwdResult.logProb.toFixed(4);
+  document.getElementById('fwdTrellis').innerHTML=buildTrellisHTML(fwdAlphaRaw,Math.min(T,25));
+
+  // === 3. Viterbi ===
+  pb.style.width='25%';pt.textContent='Ejecutando algoritmo de Viterbi...';
+  await new Promise(r=>setTimeout(r,30));
+
+  const vitResult=viterbi(sim.observations,pi,A,B);
+  const vitAcc=sim.states.reduce((s,v,i)=>s+(v===vitResult.path[i]?1:0),0)/T;
+  document.getElementById('vitAccuracy').textContent=(vitAcc*100).toFixed(1)+'%';
+  document.getElementById('vitLogProb').textContent=vitResult.probability>0?Math.log(vitResult.probability).toFixed(4):'−∞';
+  renderViterbiComparison(sim.states,vitResult.path);
+  document.getElementById('vitTrellis').innerHTML=buildTrellisHTML(vitResult.delta,Math.min(T,25));
+
+  // === 4. Monte Carlo ===
+  pt.textContent='Ejecutando simulación Monte Carlo...';
+  const mcAccuracies=[];
+  const stateCounts=[0,0,0];
+  const confMatrix=Array.from({length:N_STATES},()=>new Array(N_STATES).fill(0));
+  let totalSteps=0;
+
+  const batchSize=Math.max(1,Math.floor(N/20));
+  for(let s=0;s<N;s++){
+    const run=simulateHMM(pi,A,B,T);
+    const vit=viterbi(run.observations,pi,A,B);
+    const acc=run.states.reduce((sum,v,i)=>sum+(v===vit.path[i]?1:0),0)/T;
+    mcAccuracies.push(acc);
+    run.states.forEach(st=>stateCounts[st]++);
+    totalSteps+=T;
+    // Confusion
+    for(let t=0;t<T;t++) confMatrix[run.states[t]][vit.path[t]]++;
+
+    if(s%batchSize===0){
+      pb.style.width=(25+60*s/N)+'%';
+      pt.textContent=`Monte Carlo: ${s+1}/${N} simulaciones...`;
+      await new Promise(r=>setTimeout(r,0));
+    }
+  }
+
+  const empiricalDist=stateCounts.map(c=>c/totalSteps);
+  const meanAcc=mcAccuracies.reduce((a,b)=>a+b,0)/N;
+  const stdAcc=Math.sqrt(mcAccuracies.reduce((s,v)=>{const d=v-meanAcc;return s+d*d;},0)/N);
+  const minAcc=Math.min(...mcAccuracies),maxAcc=Math.max(...mcAccuracies);
+
+  document.getElementById('mcStats').innerHTML=`
+    <div class="stat-card"><div class="stat-value">${(meanAcc*100).toFixed(1)}%</div><div class="stat-label">Precisión Media</div></div>
+    <div class="stat-card"><div class="stat-value">${(stdAcc*100).toFixed(1)}%</div><div class="stat-label">Desviación Estándar</div></div>
+    <div class="stat-card"><div class="stat-value">${(minAcc*100).toFixed(1)}%</div><div class="stat-label">Mínimo</div></div>
+    <div class="stat-card"><div class="stat-value">${(maxAcc*100).toFixed(1)}%</div><div class="stat-label">Máximo</div></div>
+  `;
+
+  pb.style.width='88%';pt.textContent='Generando gráficos...';
+  await new Promise(r=>setTimeout(r,30));
+
+  drawHistogram('histCanvas',mcAccuracies,`Distribución de Precisión Viterbi (N=${N})`);
+
+  drawBarChart('stateDistCanvas',
+    STATE_NAMES.map((_,i)=>[empiricalDist[i]]),
+    STATE_NAMES,
+    STATE_COLORS,
+    'Distribución Empírica de Estados (Monte Carlo)',
+    null
+  );
+
+  // === 5. Stationary ===
+  pb.style.width='92%';pt.textContent='Calculando distribución estacionaria...';
+  await new Promise(r=>setTimeout(r,30));
+
+  const statRes=stationaryDistribution(A,80);
+  document.getElementById('stationaryStats').innerHTML=STATE_NAMES.map((n,i)=>
+    `<div class="stat-card"><div class="stat-value" style="-webkit-text-fill-color:${STATE_COLORS[i]}">${statRes.dist[i].toFixed(4)}</div><div class="stat-label">${n}</div></div>`
+  ).join('');
+
+  drawConvergence('convergenceCanvas',statRes.history,'Convergencia de π·A^n hacia distribución estacionaria');
+
+  drawBarChart('compDistCanvas',
+    STATE_NAMES.map((_,i)=>[statRes.dist[i],empiricalDist[i]]),
+    STATE_NAMES,
+    ['#8b5cf6','#22d3ee'],
+    'Distribución Estacionaria: Teórica vs. Empírica',
+    ['Teórica','Empírica (MC)']
+  );
+
+  // === 6. Confusion Matrix ===
+  pb.style.width='96%';pt.textContent='Generando matriz de confusión...';
+  await new Promise(r=>setTimeout(r,30));
+
+  renderConfusionMatrix(confMatrix);
+
+  // === 7. Conclusions ===
+  generateConclusions(mcAccuracies,confMatrix,statRes.dist,empiricalDist);
+
+  // === Done ===
+  pb.style.width='100%';
+  pt.textContent='✅ Simulación completada.';
+  btn.disabled=false;btn.textContent='🚀 Ejecutar Simulación';
+  document.getElementById('resultsContainer').classList.remove('hidden');
+
+  // Scroll to results
+  setTimeout(()=>{
+    document.getElementById('resTimeline').scrollIntoView({behavior:'smooth',block:'start'});
+  },200);
+}
+
+// Expose to global
+window.runFullSimulation=runFullSimulation;
+
+/* ===== SCROLL ANIMATIONS ===== */
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+},{threshold:0.1});
+document.querySelectorAll('.card,.stat-card').forEach(el=>{el.classList.add('fade-in');observer.observe(el);});
+
+/* ===== roundRect POLYFILL ===== */
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    if(w<2*r)r=w/2;if(h<2*r)r=h/2;
+    this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);
+    this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this;
+  };
+}
+
+})();
+</script>
+</body>
+</html>
