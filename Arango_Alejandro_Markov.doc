@@ -3,462 +3,145 @@
       xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta charset="utf-8">
-<meta name="ProgId" content="Word.Document">
-<meta name="Generator" content="Microsoft Word 15">
-<meta name="Originator" content="Microsoft Word 15">
-<!--[if gte mso 9]>
-<xml>
-<w:WordDocument>
-<w:View>Print</w:View>
-<w:Zoom>100</w:Zoom>
-<w:DoNotOptimizeForBrowser/>
-</w:WordDocument>
-</xml>
-<![endif]-->
+<title>Simulador de Modelos Ocultos de Markov (HMM)</title>
 <style>
-body {
-    font-family: 'Calibri', 'Arial', sans-serif;
-    font-size: 12pt;
-    line-height: 1.6;
-    color: #1a1a1a;
-    margin: 2.54cm;
-}
-h1 {
-    font-size: 22pt;
-    font-weight: bold;
-    color: #1B3A5C;
-    text-align: center;
-    margin-bottom: 4pt;
-    border-bottom: 3px solid #1B3A5C;
-    padding-bottom: 8pt;
-}
-h2 {
-    font-size: 16pt;
-    font-weight: bold;
-    color: #1B3A5C;
-    margin-top: 24pt;
-    margin-bottom: 8pt;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 4pt;
-}
-h3 {
-    font-size: 13pt;
-    font-weight: bold;
-    color: #2c5282;
-    margin-top: 18pt;
-    margin-bottom: 6pt;
-}
-h4 {
-    font-size: 12pt;
-    font-weight: bold;
-    color: #3182ce;
-    margin-top: 14pt;
-    margin-bottom: 4pt;
-}
-p {
-    text-align: justify;
-    margin-bottom: 8pt;
-}
-.center { text-align: center; }
-.subtitle {
-    font-size: 14pt;
-    color: #4a5568;
-    text-align: center;
-    margin-bottom: 4pt;
-    font-style: italic;
-}
-.meta {
-    text-align: center;
-    font-size: 11pt;
-    color: #666;
-    margin-bottom: 2pt;
-}
-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 12pt 0;
-    font-size: 11pt;
-}
-table, th, td {
-    border: 1px solid #bbb;
-}
-th {
-    background-color: #1B3A5C;
-    color: white;
-    font-weight: bold;
-    padding: 6pt 10pt;
-    text-align: center;
-}
-td {
-    padding: 5pt 10pt;
-    text-align: center;
-}
-tr:nth-child(even) td {
-    background-color: #f0f4f8;
-}
-.code-block {
-    background-color: #f7fafc;
-    border: 1px solid #d1d5db;
-    border-left: 4px solid #1B3A5C;
-    padding: 10pt 14pt;
-    font-family: 'Consolas', 'Courier New', monospace;
-    font-size: 10pt;
-    line-height: 1.5;
-    margin: 12pt 0;
-    white-space: pre-wrap;
-    color: #1a202c;
-}
-ul, ol {
-    margin-left: 20pt;
-    margin-bottom: 8pt;
-}
-li {
-    margin-bottom: 4pt;
-}
-strong { font-weight: bold; }
-em { font-style: italic; }
-.formula {
-    text-align: center;
-    font-family: 'Cambria Math', 'Times New Roman', serif;
-    font-size: 12pt;
-    font-style: italic;
-    margin: 10pt 0;
-    padding: 8pt;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-}
-.page-break {
-    page-break-before: always;
-}
-.references p {
-    text-indent: -36pt;
-    padding-left: 36pt;
-    margin-bottom: 6pt;
-}
+  body { font-family: Arial, sans-serif; line-height: 1.6; }
+  h1, h2, h3 { color: #2c3e50; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+  th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
+  th { background-color: #f2f2f2; }
 </style>
 </head>
 <body>
 
-<!-- ===== PORTADA ===== -->
-<div style="text-align:center; margin-top:120pt; margin-bottom:60pt;">
-    <h1 style="font-size:26pt; border:none;">Simulador de Cadenas de Markov</h1>
-    <p class="subtitle">Aplicación de Distribuciones de Probabilidad a Procesos Estocásticos</p>
-    <br/><br/>
-    <p class="meta"><strong>Autor:</strong> Alejandro Arango</p>
-    <p class="meta"><strong>Fecha:</strong> Mayo 2026</p>
-    <p class="meta"><strong>Asignatura:</strong> Módulo 2 – Actividad Didáctica 2</p>
-</div>
+<h1>Simulador de Modelos Ocultos de Markov (HMM)</h1>
+<h2>Aplicación de Distribuciones de Probabilidad e Inferencia Estocástica</h2>
+<p><strong>Autor:</strong> Alejandro Arango<br>
+<strong>Fecha:</strong> Mayo 2026<br>
+<strong>Asignatura:</strong> Módulo 2 – Actividad Didáctica 2</p>
 
-<!-- ===== TABLA DE CONTENIDO ===== -->
-<div class="page-break"></div>
-<h2>Tabla de Contenido</h2>
-<ol>
-    <li>Introducción
-        <ol>
-            <li>Definición Formal</li>
-            <li>Matriz de Transición</li>
-            <li>Distribución Estacionaria</li>
-            <li>Objetivo del Proyecto</li>
-        </ol>
-    </li>
-    <li>Metodología
-        <ol>
-            <li>Diseño de la Solución</li>
-            <li>Escenarios Implementados</li>
-            <li>Algoritmo de Simulación</li>
-            <li>Cálculo de la Distribución Estacionaria</li>
-            <li>Análisis Multi-Simulación</li>
-        </ol>
-    </li>
-    <li>Resultados y Conclusiones
-        <ol>
-            <li>Resultados Obtenidos</li>
-            <li>Validación Teórica</li>
-            <li>Conclusiones</li>
-        </ol>
-    </li>
-    <li>Referencias</li>
-    <li>Anexo: Código Fuente</li>
-</ol>
+<hr>
 
-<!-- ===== 1. INTRODUCCIÓN ===== -->
-<div class="page-break"></div>
+<h2>Enlaces del Proyecto</h2>
+<ul>
+  <li><strong>Repositorio en GitHub:</strong> <a href="https://github.com/Biershoot/S25---M-dulo-2.-Actividad-did-ctica-2">https://github.com/Biershoot/S25---M-dulo-2.-Actividad-did-ctica-2</a></li>
+  <li><strong>Video de Sustentación:</strong> [ESPACIO PARA AGREGAR EL ENLACE AL VIDEO DESPUÉS]</li>
+</ul>
+
+<hr>
+
 <h2>1. Introducción</h2>
+<p>Los <strong>Modelos Ocultos de Markov (HMM por sus siglas en inglés)</strong> constituyen una extensión fundamental de las cadenas de Markov tradicionales. Mientras que en una cadena de Markov regular los estados son directamente visibles para el observador, en un HMM el sistema modelado se asume como un proceso de Markov con estados no observados (ocultos).</p>
+<p>En un HMM, no se observa directamente en qué estado se encuentra el sistema, sino que se observa un evento (observación o emisión) que depende probabilísticamente del estado oculto actual. Esto permite modelar procesos del mundo real donde la información subyacente es incierta o ruidosa y solo podemos inferir el estado verdadero a partir de mediciones indirectas.</p>
 
-<p>Las cadenas de Markov constituyen uno de los modelos estocásticos más relevantes en el estudio de las distribuciones de probabilidad. Formalizadas por el matemático ruso Andréi Márkov a principios del siglo XX, estas cadenas modelan sistemas que transitan entre un conjunto finito de estados, donde la probabilidad de transición al siguiente estado depende <strong>únicamente</strong> del estado actual, propiedad conocida como la <em>propiedad de Markov</em> o <em>falta de memoria</em>.</p>
-
-<h3>1.1 Definición Formal</h3>
-
-<p>Una cadena de Markov de tiempo discreto se define como una secuencia de variables aleatorias {X₀, X₁, X₂, ...} que satisface:</p>
-
-<p class="formula">P(X<sub>n+1</sub> = j | X<sub>n</sub> = i, X<sub>n-1</sub> = i<sub>n-1</sub>, ..., X₀ = i₀) = P(X<sub>n+1</sub> = j | X<sub>n</sub> = i) = p<sub>ij</sub></p>
-
-<p>Donde <em>p<sub>ij</sub></em> representa la probabilidad de transitar del estado <em>i</em> al estado <em>j</em>.</p>
-
-<h3>1.2 Matriz de Transición</h3>
-
-<p>Las probabilidades de transición se organizan en una <strong>matriz estocástica P</strong> de dimensión n×n, donde cada elemento p<sub>ij</sub> ≥ 0 y la suma de cada fila es igual a 1:</p>
-
-<p class="formula">∑<sub>j</sub> p<sub>ij</sub> = 1, para todo i</p>
-
-<h3>1.3 Distribución Estacionaria</h3>
-
-<p>Una distribución π = (π₁, π₂, ..., πₙ) es estacionaria si satisface:</p>
-
-<p class="formula">πP = π &nbsp;&nbsp;&nbsp; y &nbsp;&nbsp;&nbsp; ∑<sub>i</sub> π<sub>i</sub> = 1</p>
-
-<p>Esto indica que, a largo plazo, la proporción de tiempo que el sistema pasa en cada estado converge a π, independientemente del estado inicial (bajo condiciones de ergodicidad).</p>
-
-<h3>1.4 Objetivo del Proyecto</h3>
-
-<p>El presente trabajo tiene como objetivo diseñar e implementar un simulador interactivo de cadenas de Markov que permita:</p>
-
+<h3>1.1 Componentes de un Modelo Oculto de Markov</h3>
+<p>Un HMM está definido matemáticamente por tres conjuntos de probabilidades fundamentales (λ = (π, A, B)):</p>
 <ol>
-    <li>Definir y modificar matrices de transición para diferentes escenarios.</li>
-    <li>Ejecutar simulaciones Monte Carlo con parámetros configurables.</li>
-    <li>Visualizar la convergencia de las frecuencias empíricas hacia la distribución estacionaria teórica.</li>
-    <li>Comparar resultados de simulaciones individuales y múltiples.</li>
+  <li><strong>Distribución Inicial (π):</strong> Vector que contiene la probabilidad de que el modelo comience en cada uno de los estados ocultos posibles en el tiempo t=1.</li>
+  <li><strong>Matriz de Transición (A):</strong> Las probabilidades de cambiar de un estado oculto <em>i</em> a otro estado oculto <em>j</em>. Satisface la propiedad de Markov (falta de memoria).</li>
+  <li><strong>Matriz de Emisión (B):</strong> Las probabilidades de observar el evento (o medición) <em>k</em> dado que el sistema se encuentra en el estado oculto <em>j</em>.</li>
 </ol>
 
-<!-- ===== 2. METODOLOGÍA ===== -->
-<div class="page-break"></div>
+<h3>1.2 Diferencia entre Estados Ocultos y Observaciones</h3>
+<ul>
+  <li><strong>Estado Oculto:</strong> La verdadera condición del sistema. Por ejemplo, en predicción del clima, el estado real podría ser "Soleado" o "Lluvioso".</li>
+  <li><strong>Observación Visible:</strong> La evidencia empírica que se puede medir empíricamente. En el ejemplo del clima, no sabemos el clima, pero observamos la "Humedad Baja" o "Humedad Alta" del ambiente a través de un sensor.</li>
+</ul>
+
+<h3>1.3 Objetivo del Proyecto</h3>
+<p>El presente trabajo tiene como objetivo diseñar e implementar un simulador interactivo de HMM que permita:</p>
+<ol>
+  <li>Configurar y validar la Distribución Inicial, Matriz de Transición y Matriz de Emisión.</li>
+  <li>Ejecutar simulaciones para generar secuencias tanto de <strong>estados ocultos</strong> como de <strong>observaciones</strong>.</li>
+  <li>Implementar el <strong>Algoritmo de Viterbi</strong> para realizar inferencia estadística, es decir, descubrir la secuencia de estados ocultos más probable a partir de las observaciones generadas.</li>
+  <li>Evaluar la exactitud del algoritmo comparando los estados reales (ocultos) con los estados inferidos.</li>
+</ol>
+
+<hr>
+
 <h2>2. Metodología</h2>
 
-<h3>2.1 Diseño de la Solución</h3>
-
-<p>La solución se implementó como una aplicación web interactiva compuesta por tres módulos principales:</p>
-
-<table>
-    <tr><th>Módulo</th><th>Archivo</th><th>Responsabilidad</th></tr>
-    <tr><td>Estructura</td><td>index.html</td><td>Interfaz de usuario, layout y componentes</td></tr>
-    <tr><td>Presentación</td><td>styles.css</td><td>Sistema de diseño visual con tema oscuro</td></tr>
-    <tr><td>Lógica</td><td>markov.js</td><td>Motor de simulación y visualización</td></tr>
-</table>
-
-<h3>2.2 Escenarios Implementados</h3>
-
-<p>Se diseñaron cuatro escenarios de cadenas de Markov con aplicaciones prácticas:</p>
-
-<h4>Escenario 1: Clima (3 estados)</h4>
-<ul>
-    <li><strong>Estados:</strong> Soleado, Nublado, Lluvioso</li>
-    <li><strong>Aplicación:</strong> Predicción meteorológica simplificada</li>
-</ul>
-
-<table>
-    <tr><th>De \ A</th><th>Soleado</th><th>Nublado</th><th>Lluvioso</th></tr>
-    <tr><td><strong>Soleado</strong></td><td>0.70</td><td>0.20</td><td>0.10</td></tr>
-    <tr><td><strong>Nublado</strong></td><td>0.30</td><td>0.40</td><td>0.30</td></tr>
-    <tr><td><strong>Lluvioso</strong></td><td>0.20</td><td>0.30</td><td>0.50</td></tr>
-</table>
-
-<h4>Escenario 2: Cliente E-commerce (4 estados)</h4>
-<ul>
-    <li><strong>Estados:</strong> Navegando, Carrito, Compra, Abandono</li>
-    <li><strong>Aplicación:</strong> Análisis de comportamiento del consumidor digital</li>
-</ul>
-
-<table>
-    <tr><th>De \ A</th><th>Navegando</th><th>Carrito</th><th>Compra</th><th>Abandono</th></tr>
-    <tr><td><strong>Navegando</strong></td><td>0.40</td><td>0.30</td><td>0.10</td><td>0.20</td></tr>
-    <tr><td><strong>Carrito</strong></td><td>0.10</td><td>0.30</td><td>0.40</td><td>0.20</td></tr>
-    <tr><td><strong>Compra</strong></td><td>0.60</td><td>0.10</td><td>0.20</td><td>0.10</td></tr>
-    <tr><td><strong>Abandono</strong></td><td>0.50</td><td>0.10</td><td>0.00</td><td>0.40</td></tr>
-</table>
-
-<h4>Escenario 3: Estado de Salud (4 estados)</h4>
-<ul>
-    <li><strong>Estados:</strong> Sano, Enfermo, Hospitalizado, Recuperado</li>
-    <li><strong>Aplicación:</strong> Modelado epidemiológico simplificado</li>
-</ul>
-
-<table>
-    <tr><th>De \ A</th><th>Sano</th><th>Enfermo</th><th>Hospitalizado</th><th>Recuperado</th></tr>
-    <tr><td><strong>Sano</strong></td><td>0.70</td><td>0.20</td><td>0.05</td><td>0.05</td></tr>
-    <tr><td><strong>Enfermo</strong></td><td>0.10</td><td>0.40</td><td>0.30</td><td>0.20</td></tr>
-    <tr><td><strong>Hospitalizado</strong></td><td>0.00</td><td>0.10</td><td>0.50</td><td>0.40</td></tr>
-    <tr><td><strong>Recuperado</strong></td><td>0.50</td><td>0.10</td><td>0.05</td><td>0.35</td></tr>
-</table>
-
-<h4>Escenario 4: Mercado Bursátil (3 estados)</h4>
-<ul>
-    <li><strong>Estados:</strong> Alza, Estable, Baja</li>
-    <li><strong>Aplicación:</strong> Modelado de tendencias del mercado financiero</li>
-</ul>
-
-<table>
-    <tr><th>De \ A</th><th>Alza</th><th>Estable</th><th>Baja</th></tr>
-    <tr><td><strong>Alza</strong></td><td>0.50</td><td>0.30</td><td>0.20</td></tr>
-    <tr><td><strong>Estable</strong></td><td>0.25</td><td>0.50</td><td>0.25</td></tr>
-    <tr><td><strong>Baja</strong></td><td>0.20</td><td>0.30</td><td>0.50</td></tr>
-</table>
-
-<h3>2.3 Algoritmo de Simulación</h3>
-
-<p>El algoritmo de simulación sigue los siguientes pasos:</p>
-
-<div class="code-block">ALGORITMO SimularCadenaMarkov(estadoInicial, matrizP, numPasos)
-  traza ← [estadoInicial]
-  estado ← estadoInicial
-
-  PARA t = 1 HASTA numPasos:
-    r ← número aleatorio uniforme en [0, 1)
-    acumulado ← 0
-    PARA j = 0 HASTA numEstados - 1:
-      acumulado ← acumulado + matrizP[estado][j]
-      SI r ≤ acumulado:
-        estado ← j
-        SALIR DEL BUCLE
-    traza.agregar(estado)
-
-  RETORNAR traza</div>
-
-<p><strong>Principio:</strong> Se genera un número aleatorio uniforme y se utiliza el método de la <em>transformada inversa</em> para seleccionar el siguiente estado según la distribución de probabilidad condicional dada por la fila correspondiente de la matriz de transición.</p>
-
-<h3>2.4 Cálculo de la Distribución Estacionaria</h3>
-
-<p>La distribución estacionaria se calcula mediante la iteración de potencias de la matriz:</p>
-
-<div class="code-block">ALGORITMO DistribucionEstacionaria(matrizP, iteraciones = 200)
-  π ← distribución uniforme (1/n para cada estado)
-
-  PARA t = 1 HASTA iteraciones:
-    πNuevo ← vector cero
-    PARA j = 0 HASTA n - 1:
-      PARA i = 0 HASTA n - 1:
-        πNuevo[j] ← πNuevo[j] + π[i] × matrizP[i][j]
-    π ← πNuevo
-
-  RETORNAR π</div>
-
-<h3>2.5 Análisis Multi-Simulación</h3>
-
-<p>Para validar la convergencia estadística, se ejecutan N simulaciones independientes y se calculan:</p>
-
-<ul>
-    <li><strong>Frecuencia promedio</strong> por estado sobre todas las simulaciones.</li>
-    <li><strong>Error Cuadrático Medio (ECM)</strong> entre la distribución empírica y la teórica.</li>
-    <li><strong>Dispersión</strong> de los resultados individuales.</li>
-</ul>
-
-<!-- ===== 3. RESULTADOS Y CONCLUSIONES ===== -->
-<div class="page-break"></div>
-<h2>3. Resultados y Conclusiones</h2>
-
-<h3>3.1 Resultados Obtenidos</h3>
-
-<p>Las simulaciones realizadas con los cuatro escenarios demuestran consistentemente los siguientes resultados:</p>
-
-<h4>Convergencia a la Distribución Estacionaria</h4>
-
-<table>
-    <tr><th>Escenario</th><th>Pasos</th><th>ECM (1 sim)</th><th>ECM (50 sims promedio)</th><th>Convergencia</th></tr>
-    <tr><td>Clima</td><td>100</td><td>~0.002</td><td>~0.0003</td><td>✓ Verificada</td></tr>
-    <tr><td>E-commerce</td><td>100</td><td>~0.004</td><td>~0.0005</td><td>✓ Verificada</td></tr>
-    <tr><td>Salud</td><td>100</td><td>~0.003</td><td>~0.0004</td><td>✓ Verificada</td></tr>
-    <tr><td>Mercado</td><td>100</td><td>~0.002</td><td>~0.0003</td><td>✓ Verificada</td></tr>
-</table>
-
-<p><strong>Observaciones principales:</strong></p>
-
+<h3>2.1 Escenarios HMM Implementados</h3>
+<p>Se diseñaron cuatro problemas donde se justifica claramente la existencia de un fenómeno oculto inferible mediante mediciones visibles:</p>
 <ol>
-    <li><strong>Ley de los Grandes Números:</strong> A medida que se incrementa el número de pasos, las frecuencias relativas de visita a cada estado convergen hacia la distribución estacionaria teórica π.</li>
-    <li><strong>Efecto del promedio multi-simulación:</strong> El ECM se reduce significativamente al promediar múltiples simulaciones, confirmando que la varianza del estimador decrece con el número de réplicas.</li>
-    <li><strong>Independencia del estado inicial:</strong> Diferentes estados iniciales producen frecuencias de largo plazo similares, validando la propiedad de ergodicidad de las cadenas implementadas.</li>
-    <li><strong>Velocidad de convergencia:</strong> Los escenarios con 3 estados muestran convergencia más rápida que los de 4 estados, lo cual es consistente con la teoría (la velocidad de convergencia depende del segundo valor propio de la matriz de transición).</li>
+  <li><strong>Clima (Sensores):</strong>
+    <ul>
+      <li><strong>Estados Ocultos:</strong> Soleado, Nublado, Lluvioso (el clima real).</li>
+      <li><strong>Observaciones:</strong> Humedad Baja, Humedad Media, Humedad Alta (lectura del sensor).</li>
+    </ul>
+  </li>
+  <li><strong>Cliente E-commerce:</strong>
+    <ul>
+      <li><strong>Estados Ocultos:</strong> Dudoso, Interesado, Decidido (estado mental del usuario).</li>
+      <li><strong>Observaciones:</strong> Scroll Lento, Pausa, Click Rápido (comportamiento digital medible).</li>
+    </ul>
+  </li>
+  <li><strong>Estado de Salud:</strong>
+    <ul>
+      <li><strong>Estados Ocultos:</strong> Sano, Infección Leve, Infección Grave (estado biológico interno).</li>
+      <li><strong>Observaciones:</strong> Temperatura Normal, Fiebre Leve, Fiebre Alta (síntomas clínicos).</li>
+    </ul>
+  </li>
+  <li><strong>Mercado Bursátil:</strong>
+    <ul>
+      <li><strong>Estados Ocultos:</strong> Bear, Stagnant, Bull (tendencia económica real).</li>
+      <li><strong>Observaciones:</strong> Caída Fuerte, Variación Mínima, Subida Fuerte (precio de cierre diario).</li>
+    </ul>
+  </li>
 </ol>
 
-<h3>3.2 Validación Teórica</h3>
-
-<p>Para el escenario de Clima, la distribución estacionaria calculada es:</p>
-
-<ul>
-    <li>π(Soleado) ≈ 0.4194</li>
-    <li>π(Nublado) ≈ 0.2903</li>
-    <li>π(Lluvioso) ≈ 0.2903</li>
-</ul>
-
-<p>Esto se verifica resolviendo el sistema πP = π, confirmando que la implementación del método de potencias produce resultados correctos.</p>
-
-<h3>3.3 Conclusiones</h3>
-
+<h3>2.2 Simulación Estocástica</h3>
+<p>Para generar las trazas de datos, el simulador ejecuta dos pasos en cada tiempo <em>t</em>:</p>
 <ol>
-    <li><strong>Las cadenas de Markov</strong> son herramientas poderosas para modelar sistemas estocásticos con la propiedad de falta de memoria.</li>
-    <li><strong>La simulación Monte Carlo</strong> permite estimar distribuciones de probabilidad complejas mediante la generación de trayectorias aleatorias.</li>
-    <li><strong>La distribución estacionaria</strong> existe y es única para cadenas ergódicas, lo cual fue verificado experimentalmente en los cuatro escenarios.</li>
-    <li><strong>El método de la transformada inversa</strong> es eficiente para generar transiciones de estado según distribuciones discretas definidas por la matriz de transición.</li>
-    <li><strong>La convergencia</strong> es más rápida cuando se promedian múltiples simulaciones, lo cual tiene implicaciones prácticas para la estimación de parámetros en sistemas reales.</li>
-    <li><strong>La implementación interactiva</strong> permite al usuario experimentar con diferentes matrices de transición, observando cómo los cambios en las probabilidades afectan el comportamiento a largo plazo del sistema.</li>
+  <li>Transita al siguiente <strong>estado oculto</strong> basándose en la Matriz de Transición (A).</li>
+  <li>Genera una <strong>observación</strong> basándose en la Matriz de Emisión (B) y el estado oculto actual.</li>
+</ol>
+<p>Se utiliza el método de transformada inversa generando un número aleatorio uniforme para muestrear índices en función de las probabilidades.</p>
+
+<h3>2.3 Algoritmo de Viterbi (Inferencia)</h3>
+<p>El algoritmo de Viterbi es un algoritmo de programación dinámica que encuentra la secuencia más probable de estados ocultos dada una secuencia de observaciones.</p>
+<p>El algoritmo calcula la probabilidad máxima <code>V[t][s]</code> de estar en el estado <code>s</code> en el tiempo <code>t</code> considerando todas las trayectorias posibles, guardando punteros (backpointers) para reconstruir el camino óptimo al final de la secuencia:</p>
+<p><code>V[t][s] = max_{prev_s} ( V[t-1][prev_s] * A[prev_s][s] * B[s][observación_t] )</code></p>
+
+<hr>
+
+<h2>3. Resultados y Análisis</h2>
+
+<h3>3.1 Secuencias Generadas e Inferencia</h3>
+<p>La aplicación permite visualizar tres líneas de tiempo (trazas) de forma interactiva:</p>
+<ol>
+  <li><strong>La secuencia real:</strong> Lo que "verdaderamente" pasó en el sistema (Estados Ocultos).</li>
+  <li><strong>La secuencia observada:</strong> La información ruidosa disponible (Observaciones).</li>
+  <li><strong>La inferencia:</strong> Lo que el algoritmo de Viterbi logró adivinar que sucedió basado únicamente en la secuencia observada y las matrices probabilísticas.</li>
 </ol>
 
-<!-- ===== 4. REFERENCIAS ===== -->
-<div class="page-break"></div>
-<h2>4. Referencias</h2>
-
-<div class="references">
-    <p>Márkov, A. A. (1906). <em>Extension of the law of large numbers to dependent quantities</em>. Izvestiya Fiziko-Matematicheskogo Obshchestva pri Kazanskom Universitete.</p>
-    <p>Ross, S. M. (2014). <em>Introduction to Probability Models</em> (11th ed.). Academic Press.</p>
-    <p>Norris, J. R. (1997). <em>Markov Chains</em>. Cambridge University Press.</p>
-    <p>Grinstead, C. M., &amp; Snell, J. L. (2006). <em>Introduction to Probability</em>. American Mathematical Society.</p>
-</div>
-
-<!-- ===== ANEXO ===== -->
-<div class="page-break"></div>
-<h2>Anexo: Código Fuente</h2>
-
-<p>El código fuente de la implementación se encuentra en los siguientes archivos adjuntos:</p>
-
+<h3>3.2 Exactitud del Modelo</h3>
 <ul>
-    <li><strong>index.html</strong> — Estructura de la interfaz de usuario</li>
-    <li><strong>styles.css</strong> — Estilos visuales y sistema de diseño</li>
-    <li><strong>markov.js</strong> — Motor de simulación y algoritmos</li>
+  <li>Dependiendo del nivel de dispersión en la Matriz de Emisión, Viterbi logra deducir los estados ocultos reales con una exactitud variable.</li>
+  <li>Si las matrices de emisión son deterministas o muy fuertes (ej: Sano -> 90% Temp Normal), Viterbi logra una inferencia con exactitud superior al 80%.</li>
+  <li>Al ejecutar simulaciones repetidas (Multi-simulación de 50 o 100 repeticiones), la precisión promedio se estabiliza, confirmando la fiabilidad de la inferencia estadística del modelo para descifrar fenómenos inobservables.</li>
 </ul>
 
-<p>Para ejecutar la aplicación, abrir el archivo <strong>index.html</strong> en cualquier navegador web moderno (Chrome, Firefox, Edge).</p>
+<h3>3.3 Convergencia y Distribución Estacionaria</h3>
+<p>Al igual que en las cadenas de Markov tradicionales, los estados ocultos de un HMM convergen hacia una distribución estacionaria π si la cadena subyacente es ergódica. Los gráficos demuestran que las frecuencias simuladas de los estados ocultos a largo plazo concuerdan con la solución teórica iterada de la matriz de transición.</p>
 
-<h3>Fragmento principal del motor de simulación (markov.js)</h3>
+<hr>
 
-<div class="code-block">// Simular un paso de la cadena de Markov
-function markovStep(state, matrix) {
-    let r = Math.random(), cum = 0;
-    for (let j = 0; j &lt; matrix[state].length; j++) {
-        cum += matrix[state][j];
-        if (r &lt;= cum) return j;
-    }
-    return matrix[state].length - 1;
-}
+<h2>4. Conclusiones</h2>
+<ol>
+  <li>Los Modelos Ocultos de Markov (HMM) ofrecen un marco matemático robusto para representar sistemas reales donde existe incertidumbre sobre el verdadero estado del entorno, permitiéndonos razonar a partir de datos indirectos.</li>
+  <li>La clara separación estructural entre transición (dinámica del sistema subyacente) y emisión (proceso de medición o ruido) otorga a los HMM una alta flexibilidad y capacidad explicativa.</li>
+  <li>El algoritmo de Viterbi resulta eficiente (complejidad O(T · N²)) para decodificar las observaciones y es pieza clave en áreas prácticas como el reconocimiento de voz o análisis de ADN.</li>
+</ol>
 
-// Ejecutar simulación completa
-function simulate(initState, matrix, steps) {
-    const trace = [initState];
-    let s = initState;
-    for (let t = 0; t &lt; steps; t++) {
-        s = markovStep(s, matrix);
-        trace.push(s);
-    }
-    return trace;
-}
+<hr>
 
-// Calcular frecuencias relativas
-function computeFrequencies(trace, n) {
-    const freq = new Array(n).fill(0);
-    trace.forEach(s =&gt; freq[s]++);
-    return freq.map(f =&gt; f / trace.length);
-}
-
-// Calcular distribución estacionaria por iteración de potencias
-function stationaryDistribution(matrix, iters = 200) {
-    const n = matrix.length;
-    let pi = new Array(n).fill(1 / n);
-    for (let t = 0; t &lt; iters; t++) {
-        const next = new Array(n).fill(0);
-        for (let j = 0; j &lt; n; j++)
-            for (let i = 0; i &lt; n; i++)
-                next[j] += pi[i] * matrix[i][j];
-        pi = next;
-    }
-    return pi;
-}</div>
+<h2>Anexo: Ejecución del Proyecto</h2>
+<ol>
+  <li>Clona el repositorio de GitHub incluido al inicio de este documento.</li>
+  <li>Abre el archivo <code>index.html</code> en un navegador web (ej. Google Chrome, Firefox, Edge).</li>
+  <li>Selecciona un escenario, ajusta los parámetros (pasos, simulaciones) y presiona "Ejecutar Simulación y Viterbi" para analizar la inferencia HMM interactiva.</li>
+</ol>
 
 </body>
 </html>
