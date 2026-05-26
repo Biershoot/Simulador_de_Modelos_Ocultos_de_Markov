@@ -10,7 +10,7 @@
 ## Enlaces del Proyecto
 
 - 🔗 **Repositorio en GitHub:** [https://github.com/Biershoot/S25---M-dulo-2.-Actividad-did-ctica-2](https://github.com/Biershoot/S25---M-dulo-2.-Actividad-did-ctica-2)
-- ▶️ **Video de Sustentación:** [ESPACIO PARA AGREGAR EL ENLACE AL VIDEO DESPUÉS]
+- ▶️ **Video de Sustentación:** [https://drive.google.com/file/d/1wHlWz4uQ5LICjlKX-b_bid2SobdoiwSj/view?usp=drive_link]
 
 ---
 
